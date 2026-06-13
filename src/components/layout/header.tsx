@@ -1,18 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Bell, Plus, ChevronDown, User, Settings, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { mockNotifications } from "@/lib/data/mock-data";
-import { formatRelativeTime } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { mapNotification } from "@/lib/supabase/mappers";
+import { formatRelativeTime, getInitials, cn } from "@/lib/utils";
+import type { Notification } from "@/lib/types";
 
 const notificationIconColor: Record<string, string> = {
   success: "bg-emerald-100 text-emerald-600",
@@ -21,9 +23,37 @@ const notificationIconColor: Record<string, string> = {
   error: "bg-red-100 text-red-600",
 };
 
-export function Header() {
+type HeaderUser = {
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+};
+
+export function Header({ user }: { user: HeaderUser }) {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
-  const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data) setNotifications(data.map(mapNotification));
+      });
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6 gap-4 shrink-0">
@@ -86,7 +116,9 @@ export function Header() {
             </div>
             <DropdownMenuSeparator />
             <div className="max-h-72 overflow-y-auto">
-              {mockNotifications.map((notif) => (
+              {notifications.length === 0 ? (
+                <p className="px-3 py-4 text-xs text-slate-500 text-center">No notifications</p>
+              ) : notifications.map((notif) => (
                 <div
                   key={notif.id}
                   className={cn(
@@ -125,11 +157,12 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-100 transition-colors">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="text-[10px]">AW</AvatarFallback>
+                {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                <AvatarFallback className="text-[10px]">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="hidden sm:block text-left">
-                <p className="text-xs font-semibold text-slate-900 leading-none">Admin User</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">Administrator</p>
+                <p className="text-xs font-semibold text-slate-900 leading-none">{user.name}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5 capitalize">{user.role}</p>
               </div>
               <ChevronDown className="h-3 w-3 text-slate-400 hidden sm:block" />
             </button>
@@ -148,10 +181,11 @@ export function Header() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/login" className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50">
-                <LogOut className="h-3.5 w-3.5" /> Sign out
-              </Link>
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

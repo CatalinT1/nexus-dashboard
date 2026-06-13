@@ -49,7 +49,7 @@ export interface ClientActivity {
 }
 
 export type AppointmentStatus = "scheduled" | "confirmed" | "completed" | "cancelled" | "no-show";
-export type AppointmentCategory = "consultation" | "follow-up" | "treatment" | "review" | "emergency";
+export type AppointmentCategory = "consultation" | "follow-up" | "treatment" | "review" | "other";
 
 export interface Appointment {
   id: string;

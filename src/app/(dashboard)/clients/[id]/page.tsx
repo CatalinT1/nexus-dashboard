@@ -1,10 +1,9 @@
-"use client";
-import React, { use } from "react";
+import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft, Mail, Phone, MapPin, Building2, Calendar,
-  DollarSign, Edit, MoreHorizontal, Star, MessageSquare,
+  DollarSign, Edit, Star, MessageSquare,
   PhoneCall, CreditCard, Clock, CheckCircle2, Tag
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { mockClients, mockClientActivities, mockAppointments } from "@/lib/data/mock-data";
+import { createClient } from "@/lib/supabase/server";
+import { mapClient, mapClientActivity, mapAppointment } from "@/lib/supabase/mappers";
 import { formatCurrency, formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
 import type { ClientStatus } from "@/lib/types";
 
@@ -37,17 +37,24 @@ const activityColors: Record<string, string> = {
   payment: "bg-violet-100 text-violet-600",
 };
 
-export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const client = mockClients.find(c => c.id === id);
-  if (!client) notFound();
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  const activities = mockClientActivities.filter(a => a.clientId === id);
-  const clientAppointments = mockAppointments.filter(a => a.clientId === id);
+  const [{ data: rawClient }, { data: rawActivities }, { data: rawAppointments }] = await Promise.all([
+    supabase.from("clients").select("*").eq("id", id).single(),
+    supabase.from("client_activities").select("*").eq("client_id", id).order("created_at", { ascending: false }),
+    supabase.from("appointments").select("*").eq("client_id", id).order("start_time", { ascending: false }),
+  ]);
+
+  if (!rawClient) notFound();
+
+  const client = mapClient(rawClient);
+  const activities = (rawActivities ?? []).map(mapClientActivity);
+  const clientAppointments = (rawAppointments ?? []).map(mapAppointment);
 
   return (
     <div className="space-y-6 max-w-6xl">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild className="text-slate-500 -ml-2">
           <Link href="/clients"><ArrowLeft className="h-3.5 w-3.5" />Clients</Link>
@@ -56,7 +63,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         <span className="text-sm text-slate-700 font-medium">{client.name}</span>
       </div>
 
-      {/* Profile header */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
@@ -79,7 +85,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                   {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
                 </Badge>
               </div>
-
               <div className="mt-3 flex flex-wrap gap-4">
                 <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 transition-colors">
                   <Mail className="h-3.5 w-3.5 text-slate-400" />{client.email}
@@ -94,10 +99,9 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                   </span>
                 )}
               </div>
-
               {client.tags.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {client.tags.map(tag => (
+                  {client.tags.map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs gap-1">
                       <Tag className="h-2.5 w-2.5" />{tag}
                     </Badge>
@@ -105,11 +109,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               )}
             </div>
-
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/clients/${client.id}/edit`}><Edit className="h-3.5 w-3.5" />Edit</Link>
-              </Button>
               <Button size="sm" asChild>
                 <Link href="/appointments"><Calendar className="h-3.5 w-3.5" />Book Appointment</Link>
               </Button>
@@ -118,7 +118,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         </CardContent>
       </Card>
 
-      {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Total Revenue", value: formatCurrency(client.totalRevenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -145,7 +144,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         })}
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="activity">
         <TabsList>
           <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -157,11 +155,11 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           <Card>
             <CardContent className="p-6">
               <div className="space-y-5">
-                {activities.length > 0 ? activities.map((activity, i) => {
-                  const Icon = activityIcons[activity.type] || MessageSquare;
+                {activities.length > 0 ? activities.map((activity) => {
+                  const Icon = activityIcons[activity.type] ?? MessageSquare;
                   return (
                     <div key={activity.id} className="flex items-start gap-4">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${activityColors[activity.type]}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${activityColors[activity.type] ?? "bg-slate-100 text-slate-600"}`}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -187,9 +185,9 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             <CardContent className="p-0">
               {clientAppointments.length > 0 ? (
                 <div className="divide-y divide-slate-100">
-                  {clientAppointments.map(apt => (
+                  {clientAppointments.map((apt) => (
                     <div key={apt.id} className="flex items-center gap-4 px-6 py-4">
-                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: apt.color }} />
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: apt.color ?? "#6366f1" }} />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-slate-900">{apt.title}</p>
                         <p className="text-xs text-slate-500 mt-0.5">{apt.staffName} · {formatDate(apt.startTime, "long")}</p>

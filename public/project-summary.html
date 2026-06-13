@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Dashboard — Project Summary</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .page { max-width: 900px; margin: 0 auto; }
+
+    /* Header */
+    .hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border-radius: 16px;
+      padding: 2.5rem;
+      color: white;
+      margin-bottom: 2rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .hero p { margin-top: 0.5rem; opacity: 0.85; font-size: 1.05rem; }
+    .hero .meta {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .pill {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      padding: 0.25rem 0.875rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* Sections */
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    h2 .icon { font-size: 1.1rem; }
+
+    /* Cards grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .card h3 { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0.4rem; }
+    .card p  { font-size: 0.82rem; color: #64748b; line-height: 1.55; }
+    .card .badge {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+    .badge-server  { background: #ede9fe; color: #6d28d9; }
+    .badge-client  { background: #dbeafe; color: #1d4ed8; }
+    .badge-auth    { background: #dcfce7; color: #166534; }
+    .badge-new     { background: #fef3c7; color: #92400e; }
+
+    /* File tree */
+    .file-tree {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      overflow-x: auto;
+    }
+    .file-tree .dir  { color: #7dd3fc; }
+    .file-tree .file { color: #e2e8f0; }
+    .file-tree .note { color: #64748b; font-style: italic; }
+    .file-tree .new  { color: #86efac; }
+    .file-tree .mod  { color: #fbbf24; }
+    .file-tree line  { display: block; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      text-align: left; padding: 0.6rem 0.875rem;
+      background: #f1f5f9; color: #475569;
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    th:first-child { border-radius: 8px 0 0 8px; }
+    th:last-child  { border-radius: 0 8px 8px 0; }
+    td { padding: 0.6rem 0.875rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .mono { font-family: "Cascadia Code", "Fira Code", monospace; font-size: 0.78rem; color: #4f46e5; }
+
+    /* Steps */
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+    .steps li {
+      display: flex; align-items: flex-start; gap: 0.875rem;
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 0.875rem 1rem;
+    }
+    .step-num {
+      width: 1.75rem; height: 1.75rem; border-radius: 50%;
+      background: #4f46e5; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .steps li div { font-size: 0.875rem; color: #334155; }
+    .steps li strong { display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.15rem; }
+
+    /* DB tables */
+    .db-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+    .db-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem;
+    }
+    .db-card h4 { font-size: 0.85rem; font-weight: 700; color: #4f46e5; margin-bottom: 0.4rem; font-family: monospace; }
+    .db-card ul { list-style: none; }
+    .db-card ul li {
+      font-size: 0.75rem; color: #64748b; padding: 0.1rem 0;
+      font-family: "Cascadia Code", monospace;
+    }
+    .db-card ul li::before { content: "· "; color: #cbd5e1; }
+
+    /* Credential box */
+    .cred-box {
+      background: #0f172a; border-radius: 10px; padding: 1.25rem;
+      font-family: monospace; font-size: 0.82rem; color: #94a3b8;
+    }
+    .cred-box .label { color: #7dd3fc; }
+    .cred-box .value { color: #e2e8f0; }
+
+    /* Info box */
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.875rem; color: #1e40af;
+    }
+    .warn-box {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.875rem; color: #92400e;
+    }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      font-size: 0.78rem; color: #94a3b8;
+      border-top: 1px solid #e2e8f0; padding-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>Nexus Dashboard</h1>
+    <p>Complete SaaS dashboard connected to a live Supabase backend — project implementation summary</p>
+    <div class="meta">
+      <span class="pill">Next.js 16.2.9</span>
+      <span class="pill">TypeScript</span>
+      <span class="pill">Tailwind CSS v4</span>
+      <span class="pill">Supabase</span>
+      <span class="pill">Recharts</span>
+      <span class="pill">Radix UI</span>
+      <span class="pill">Generated: June 2026</span>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <section>
+    <h2><span class="icon">📋</span> Project Overview</h2>
+    <div class="info-box">
+      A production-quality SaaS management dashboard built from scratch, featuring real authentication,
+      a live Supabase PostgreSQL database, full CRUD operations, a calendar, reports with charts, staff
+      management, and a client CRM — all in a single Next.js 16 App Router project.
+      <br /><br />
+      <strong>Local URL:</strong> <code>http://localhost:3000</code> &nbsp;·&nbsp;
+      <strong>Directory:</strong> <code>d:\Dashboard\app</code>
+    </div>
+  </section>
+
+  <!-- Pages -->
+  <section>
+    <h2><span class="icon">📄</span> Pages Implemented</h2>
+    <div class="grid">
+
+      <div class="card">
+        <span class="badge badge-auth">Auth</span>
+        <h3>/login</h3>
+        <p>Email + password sign-in via Supabase Auth. Shows error on bad credentials. Redirects authenticated users away.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-auth">Auth</span>
+        <h3>/forgot-password</h3>
+        <p>Sends a Supabase password-reset email with a secure callback link. Shows confirmation on success.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-auth">Auth · New</span>
+        <h3>/reset-password</h3>
+        <p>Reached via email link. Validates password length and match, calls <code>supabase.auth.updateUser()</code>, then redirects to dashboard.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-server">Server Component</span>
+        <h3>/dashboard</h3>
+        <p>Main overview with KPI cards (total clients, appointments today, active staff, revenue) and two Recharts charts — AreaChart for revenue trend, BarChart for monthly appointments. All data from live DB.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client Component</span>
+        <h3>/clients</h3>
+        <p>Full client CRM list with live search, status filter (All / Active / VIP / Prospect / Inactive), column sort, status badges, and quick navigation to client details.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-server">Server Component</span>
+        <h3>/clients/[id]</h3>
+        <p>Individual client profile showing contact info, address, tags, appointment history, activity timeline, revenue summary, and status badge.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client · New</span>
+        <h3>/clients/new</h3>
+        <p>New client form with full address fields. Inserts into Supabase <code>clients</code> table and redirects to the new client's profile on success.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client Component</span>
+        <h3>/appointments</h3>
+        <p>Interactive calendar with week/day/month views. Shows real appointments from DB with color-coded status. Click any slot to see appointment details in a dialog.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client Component</span>
+        <h3>/staff</h3>
+        <p>Staff roster with availability status, specialization, ratings, and appointment counts. Includes an Add Staff dialog that inserts into Supabase.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-server">Server Component</span>
+        <h3>/reports</h3>
+        <p>Analytics dashboard with revenue trend, top clients by revenue, top staff by appointments. KPI summary cards and tabbed charts — all from live DB aggregations.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client Component</span>
+        <h3>/profile</h3>
+        <p>User profile page. Edit name, phone, department. Change password via <code>supabase.auth.updateUser()</code>. Displays real role and active status from the <code>profiles</code> table.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-client">Client Component</span>
+        <h3>/settings</h3>
+        <p>Workspace settings UI with tabs: General (business info), Notifications (email + push toggles), Security (password + 2FA), Billing (plan usage). Org-level static fields.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section>
+    <h2><span class="icon">🛠</span> Tech Stack</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Framework</strong></td>
+          <td class="mono">Next.js 16.2.9 (App Router, Turbopack)</td>
+          <td>Server + Client Components, file-based routing, SSR</td>
+        </tr>
+        <tr>
+          <td><strong>Language</strong></td>
+          <td class="mono">TypeScript 5</td>
+          <td>Type-safe DB rows, component props, form state</td>
+        </tr>
+        <tr>
+          <td><strong>Styling</strong></td>
+          <td class="mono">Tailwind CSS v4</td>
+          <td>Utility-first CSS — no separate config file required</td>
+        </tr>
+        <tr>
+          <td><strong>UI Primitives</strong></td>
+          <td class="mono">Radix UI</td>
+          <td>Accessible dialogs, dropdowns, tabs, selects, switches</td>
+        </tr>
+        <tr>
+          <td><strong>Icons</strong></td>
+          <td class="mono">Lucide React</td>
+          <td>Consistent icon set throughout the dashboard</td>
+        </tr>
+        <tr>
+          <td><strong>Charts</strong></td>
+          <td class="mono">Recharts</td>
+          <td>AreaChart (revenue), BarChart (appointments), LineChart</td>
+        </tr>
+        <tr>
+          <td><strong>Backend / DB</strong></td>
+          <td class="mono">Supabase (PostgreSQL)</td>
+          <td>Auth, database, Row Level Security, real-time ready</td>
+        </tr>
+        <tr>
+          <td><strong>Supabase Client</strong></td>
+          <td class="mono">@supabase/ssr + @supabase/supabase-js</td>
+          <td>Server Components, Client Components, proxy (middleware)</td>
+        </tr>
+        <tr>
+          <td><strong>Date handling</strong></td>
+          <td class="mono">date-fns</td>
+          <td>Calendar formatting, relative time, appointment ranges</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Database -->
+  <section>
+    <h2><span class="icon">🗄</span> Database Schema (Supabase)</h2>
+    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">
+      All tables have Row Level Security enabled. <code>SELECT</code> requires an authenticated session.
+      Write operations (INSERT/UPDATE) are further scoped to <code>admin</code> or <code>manager</code> roles.
+    </p>
+    <div class="db-grid">
+      <div class="db-card">
+        <h4>profiles</h4>
+        <ul>
+          <li>id → auth.users</li>
+          <li>name, email</li>
+          <li>role (admin/manager/staff)</li>
+          <li>phone, department</li>
+          <li>is_active, joined_at</li>
+          <li>avatar (nullable)</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>clients</h4>
+        <ul>
+          <li>id, name, email, phone</li>
+          <li>company (nullable)</li>
+          <li>status (active/vip/prospect/inactive)</li>
+          <li>address_street/city/state/zip/country</li>
+          <li>notes, tags (TEXT[])</li>
+          <li>total_appointments, total_revenue</li>
+          <li>last_contact_at</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>staff</h4>
+        <ul>
+          <li>id, name, email</li>
+          <li>role, specialization</li>
+          <li>is_active</li>
+          <li>work_days (INT[])</li>
+          <li>start_time, end_time</li>
+          <li>total_appointments</li>
+          <li>rating (NUMERIC 3,1)</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>appointments</h4>
+        <ul>
+          <li>id, client_id → clients</li>
+          <li>staff_id → staff</li>
+          <li>client_name, staff_name (denorm.)</li>
+          <li>title, category, status</li>
+          <li>start_time, end_time</li>
+          <li>fee, color, location</li>
+          <li>reminders (BOOLEAN)</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>client_activities</h4>
+        <ul>
+          <li>id, client_id → clients</li>
+          <li>type (appointment/note/email/call/payment)</li>
+          <li>title, description</li>
+          <li>created_by (TEXT)</li>
+          <li>created_at</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>notifications</h4>
+        <ul>
+          <li>id, user_id → auth.users (nullable)</li>
+          <li>type (info/success/warning/error)</li>
+          <li>title, message</li>
+          <li>is_read, href</li>
+          <li>created_at</li>
+        </ul>
+      </div>
+      <div class="db-card">
+        <h4>revenue_data</h4>
+        <ul>
+          <li>id</li>
+          <li>month (TEXT), month_order (INT)</li>
+          <li>year (INT)</li>
+          <li>revenue (NUMERIC)</li>
+          <li>appointments (INT)</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:1rem;" class="info-box">
+      <strong>Auto-profile trigger:</strong> When a new user signs up in Supabase Auth, a PostgreSQL trigger
+      (<code>handle_new_user()</code>) automatically creates a row in the <code>profiles</code> table
+      using the auth user's ID, email, and optional name from <code>raw_user_meta_data</code>.
+    </div>
+  </section>
+
+  <!-- Seed Data -->
+  <section>
+    <h2><span class="icon">🌱</span> Seed Data (Pre-loaded)</h2>
+    <div class="grid">
+      <div class="card"><h3>8 Clients</h3><p>Sarah Johnson (VIP), Michael Torres, Emma Rodriguez, David Kim, Lisa Chen (prospect), Robert Martinez (inactive), Jennifer Park (VIP), Alex Thompson</p></div>
+      <div class="card"><h3>4 Staff</h3><p>Dr. Michael Chen (Internal Medicine), Dr. Sarah Rodriguez (Family Medicine), James Wilson (Physical Therapy), Dr. Aisha Patel (Dermatology)</p></div>
+      <div class="card"><h3>10 Appointments</h3><p>7 upcoming, 2 completed, 1 cancelled — spread across the next 5 days and past 2 weeks, with realistic fees and locations</p></div>
+      <div class="card"><h3>12 Months Revenue</h3><p>Full 2026 revenue data (Jan–Dec) ranging from $18,500 to $32,400/month, used in the dashboard and reports charts</p></div>
+      <div class="card"><h3>5 Notifications</h3><p>Mix of info, success, and warning notifications — 2 unread — shown in the header dropdown bell icon</p></div>
+      <div class="card"><h3>5 Client Activities</h3><p>Activity timeline entries across 4 clients: appointment bookings, payments, notes, calls, emails</p></div>
+    </div>
+  </section>
+
+  <!-- File Structure -->
+  <section>
+    <h2><span class="icon">📁</span> Key Files</h2>
+    <div class="file-tree">
+      <line><span class="dir">d:\Dashboard\app\</span></line>
+      <line>├── <span class="new">.env.local</span>               <span class="note"># Supabase URL + anon key</span></line>
+      <line>├── <span class="new">supabase/</span></line>
+      <line>│   ├── <span class="new">schema.sql</span>             <span class="note"># All tables, enums, RLS, trigger</span></line>
+      <line>│   └── <span class="new">seed.sql</span>               <span class="note"># 8 clients, 4 staff, 10 appointments…</span></line>
+      <line>└── <span class="dir">src/</span></line>
+      <line>    ├── <span class="new">proxy.ts</span>               <span class="note"># Route protection (Next.js 16 middleware)</span></line>
+      <line>    ├── <span class="dir">lib/</span></line>
+      <line>    │   ├── types.ts               <span class="note"># camelCase TypeScript interfaces</span></line>
+      <line>    │   ├── utils.ts               <span class="note"># cn(), getInitials(), formatCurrency()</span></line>
+      <line>    │   └── <span class="new">supabase/</span></line>
+      <line>    │       ├── <span class="new">client.ts</span>          <span class="note"># Browser client (use client components)</span></line>
+      <line>    │       ├── <span class="new">server.ts</span>          <span class="note"># Server client (Server Components)</span></line>
+      <line>    │       ├── <span class="new">db-types.ts</span>        <span class="note"># snake_case DB row types</span></line>
+      <line>    │       └── <span class="new">mappers.ts</span>         <span class="note"># DB rows → TypeScript interfaces</span></line>
+      <line>    ├── <span class="dir">components/</span></line>
+      <line>    │   ├── <span class="dir">ui/</span>                    <span class="note"># Button, Card, Input, Badge, Dialog, etc.</span></line>
+      <line>    │   └── <span class="dir">layout/</span></line>
+      <line>    │       ├── <span class="mod">header.tsx</span>         <span class="note"># Real user prop, live notifications, sign out</span></line>
+      <line>    │       └── sidebar.tsx</line>
+      <line>    └── <span class="dir">app/</span></line>
+      <line>        ├── <span class="new">auth/callback/route.ts</span> <span class="note"># OAuth + reset-password code exchange</span></line>
+      <line>        ├── <span class="dir">(auth)/</span></line>
+      <line>        │   ├── <span class="mod">login/page.tsx</span>     <span class="note"># Real Supabase sign-in</span></line>
+      <line>        │   ├── <span class="mod">forgot-password/</span>   <span class="note"># Real resetPasswordForEmail()</span></line>
+      <line>        │   └── <span class="new">reset-password/</span>    <span class="note"># New — updateUser({ password })</span></line>
+      <line>        └── <span class="dir">(dashboard)/</span></line>
+      <line>            ├── <span class="mod">layout.tsx</span>         <span class="note"># Auth guard + profile fetch → Header</span></line>
+      <line>            ├── <span class="mod">dashboard/page.tsx</span> <span class="note"># Server Component, 8 parallel queries</span></line>
+      <line>            ├── <span class="new">dashboard/charts.tsx</span><span class="note"># "use client" Recharts wrapper</span></line>
+      <line>            ├── <span class="mod">clients/page.tsx</span>   <span class="note"># Live search + filter from Supabase</span></line>
+      <line>            ├── <span class="mod">clients/[id]/</span>      <span class="note"># Server Component, parallel queries</span></line>
+      <line>            ├── <span class="mod">clients/new/</span>       <span class="note"># Real insert into clients table</span></line>
+      <line>            ├── <span class="mod">appointments/</span>      <span class="note"># Live calendar from appointments table</span></line>
+      <line>            ├── <span class="mod">staff/page.tsx</span>     <span class="note"># Live staff list + add dialog</span></line>
+      <line>            ├── <span class="mod">reports/page.tsx</span>   <span class="note"># Server Component, aggregated queries</span></line>
+      <line>            ├── <span class="new">reports/report-charts.tsx</span> <span class="note"># "use client" charts wrapper</span></line>
+      <line>            ├── <span class="mod">profile/page.tsx</span>   <span class="note"># Edit profile + change password</span></line>
+      <line>            └── settings/page.tsx  <span class="note"># Org-level settings (static UI)</span></line>
+    </div>
+    <div style="margin-top:0.75rem;font-size:0.78rem;color:#64748b;display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <span><span style="color:#86efac;">■</span> Green = new file created</span>
+      <span><span style="color:#fbbf24;">■</span> Yellow = existing file updated</span>
+    </div>
+  </section>
+
+  <!-- Auth Flow -->
+  <section>
+    <h2><span class="icon">🔐</span> Authentication Flow</h2>
+    <ol class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div><strong>Route Protection — proxy.ts</strong>
+        Every request passes through the proxy. It calls <code>supabase.auth.getUser()</code> (validates JWT server-side). Unauthenticated requests to <code>/dashboard</code>, <code>/clients</code>, etc. are redirected to <code>/login</code>. Authenticated users visiting <code>/login</code> are redirected to <code>/dashboard</code>.</div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div><strong>Sign In — /login</strong>
+        Calls <code>supabase.auth.signInWithPassword({ email, password })</code>. On success: <code>router.refresh()</code> then <code>router.push("/dashboard")</code>. On failure: displays the Supabase error message in a red alert.</div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div><strong>Dashboard Layout — (dashboard)/layout.tsx</strong>
+        Async Server Component. Calls <code>getUser()</code> then queries the <code>profiles</code> table for name/role/avatar. Passes user data as a prop to the Header component.</div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div><strong>Password Reset</strong>
+        <code>/forgot-password</code> calls <code>resetPasswordForEmail()</code> with a <code>redirectTo</code> pointing to <code>/auth/callback?next=/reset-password</code>. The callback route exchanges the code for a session, then the <code>/reset-password</code> page calls <code>updateUser({ password })</code>.</div>
+      </li>
+      <li>
+        <div class="step-num">5</div>
+        <div><strong>Sign Out</strong>
+        Header calls <code>supabase.auth.signOut()</code> then navigates to <code>/login</code>. The proxy blocks any back-navigation attempt.</div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Supabase Connection -->
+  <section>
+    <h2><span class="icon">☁️</span> Supabase Project</h2>
+    <div class="cred-box">
+      <div><span class="label">Project ID:  </span><span class="value">skzqkyjrucmvlhgqnkdx</span></div>
+      <div><span class="label">Region:      </span><span class="value">eu-west-1 (EU West)</span></div>
+      <div><span class="label">API URL:     </span><span class="value">https://skzqkyjrucmvlhgqnkdx.supabase.co</span></div>
+      <div><span class="label">Status:      </span><span class="value">ACTIVE_HEALTHY</span></div>
+      <div><span class="label">Admin user:  </span><span class="value">cata.iancul@yahoo.com  (role: admin)</span></div>
+    </div>
+  </section>
+
+  <!-- Important Notes -->
+  <section>
+    <h2><span class="icon">⚠️</span> Important Notes</h2>
+    <div class="warn-box" style="margin-bottom:0.75rem;">
+      <strong>Supabase Redirect URL:</strong> To make password reset emails work on localhost, go to
+      Supabase Dashboard → Authentication → URL Configuration and add
+      <code>http://localhost:3000/**</code> to the Redirect URLs list.
+    </div>
+    <div class="warn-box">
+      <strong>RLS &amp; Roles:</strong> All database tables use Row Level Security. Data is only visible
+      to authenticated users. Write operations (add client, add staff) are restricted to users whose
+      <code>profiles.role</code> is <code>admin</code> or <code>manager</code>. The seeded admin user
+      has full access.
+    </div>
+  </section>
+
+  <!-- Key Decisions -->
+  <section>
+    <h2><span class="icon">💡</span> Key Technical Decisions</h2>
+    <table>
+      <thead>
+        <tr><th>Decision</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>proxy.ts instead of middleware.ts</strong></td>
+          <td>Next.js 16 renamed the middleware file and export. Using the old name silently fails.</td>
+        </tr>
+        <tr>
+          <td><strong>getUser() not getSession() in proxy</strong></td>
+          <td><code>getSession()</code> trusts the cookie without server-side JWT validation — a security risk. <code>getUser()</code> validates with Supabase on every request.</td>
+        </tr>
+        <tr>
+          <td><strong>@supabase/ssr (not auth-helpers)</strong></td>
+          <td>The <code>auth-helpers-nextjs</code> package is deprecated. <code>@supabase/ssr</code> is the correct package for Next.js App Router.</td>
+        </tr>
+        <tr>
+          <td><strong>Server Components for read-heavy pages</strong></td>
+          <td>Dashboard, client detail, and reports pages fetch data server-side with <code>Promise.all()</code> for parallel queries — no loading state needed, better SEO.</td>
+        </tr>
+        <tr>
+          <td><strong>Recharts extracted to "use client" children</strong></td>
+          <td>Recharts is a client-only library. Server Component pages extract chart rendering into separate <code>charts.tsx</code> files marked <code>"use client"</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>await cookies() in server.ts</strong></td>
+          <td>Next.js 16 requires <code>cookies()</code> to be awaited — calling it synchronously throws a build error.</td>
+        </tr>
+        <tr>
+          <td><strong>await params in Server Components</strong></td>
+          <td>Next.js 16 makes <code>params</code> a Promise in Server Components — must <code>await params</code> before reading route segments like <code>[id]</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Nexus Dashboard · Built with Next.js 16 + Supabase · June 2026
+  </footer>
+
+</div>
+</body>
+</html>

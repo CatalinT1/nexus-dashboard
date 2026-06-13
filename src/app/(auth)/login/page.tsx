@@ -6,17 +6,30 @@ import { Eye, EyeOff, Zap, ArrowRight, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ email: "admin@nexus.com", password: "password123" });
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ email: "", password: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    setError("");
+    const supabase = createClient();
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+    setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    router.refresh();
     router.push("/dashboard");
   };
 
@@ -81,6 +94,10 @@ export default function LoginPage() {
             </label>
           </div>
 
+          {error && (
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+          )}
+
           <Button
             type="submit"
             variant="premium"
@@ -92,32 +109,6 @@ export default function LoginPage() {
             {!loading && <ArrowRight className="h-4 w-4" />}
           </Button>
         </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-white/10" />
-          <span className="text-xs text-slate-500">or continue with</span>
-          <div className="flex-1 h-px bg-white/10" />
-        </div>
-
-        {/* SSO buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          {["Google", "Microsoft"].map((provider) => (
-            <button
-              key={provider}
-              className="flex items-center justify-center gap-2 h-9 rounded-lg border border-white/10 bg-white/5 text-sm text-slate-300 hover:bg-white/10 transition-colors"
-            >
-              <span className="text-xs font-medium">{provider}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Demo hint */}
-      <div className="mt-4 rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3 text-center">
-        <p className="text-xs text-indigo-300">
-          <span className="font-semibold">Demo:</span> Use pre-filled credentials to explore the dashboard
-        </p>
       </div>
 
       <p className="mt-6 text-center text-xs text-slate-500">

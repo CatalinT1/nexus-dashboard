@@ -5,17 +5,29 @@ import { ArrowLeft, Mail, Send, CheckCircle2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    setError("");
+    const supabase = createClient();
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback?next=/reset-password`
+        : "/auth/callback?next=/reset-password";
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
     setSent(true);
   };
 
@@ -60,6 +72,9 @@ export default function ForgotPasswordPage() {
                 required
               />
             </div>
+            {error && (
+              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+            )}
             <Button
               type="submit"
               variant="premium"

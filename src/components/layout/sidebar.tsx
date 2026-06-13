@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Calendar, UserCog, BarChart3,
   Settings, ChevronLeft, ChevronRight, LogOut, Zap,
-  Bell, HelpCircle
+  Bell, HelpCircle, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ const navItems = [
   { href: "/clients", icon: Users, label: "Clients", badge: "128" },
   { href: "/appointments", icon: Calendar, label: "Appointments", badge: "4" },
   { href: "/staff", icon: UserCog, label: "Staff" },
+  { href: "/users", icon: ShieldCheck, label: "Users" },
   { href: "/reports", icon: BarChart3, label: "Reports" },
 ];
 

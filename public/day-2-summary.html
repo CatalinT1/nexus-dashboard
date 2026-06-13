@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Dashboard — Day 2 Summary</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .page { max-width: 960px; margin: 0 auto; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%);
+      border-radius: 16px;
+      padding: 2.5rem;
+      color: white;
+      margin-bottom: 2rem;
+    }
+    .hero .day-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 999px;
+      padding: 0.2rem 0.875rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .hero p  { margin-top: 0.5rem; opacity: 0.9; font-size: 1.05rem; }
+    .hero .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+    .pill {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      padding: 0.25rem 0.875rem;
+      font-size: 0.8rem; font-weight: 500;
+    }
+
+    /* Sections */
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.15rem; font-weight: 700; color: #1e293b;
+      margin-bottom: 1rem; padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    h2 .icon { font-size: 1.1rem; }
+    h3 { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; }
+
+    /* Cards */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .card {
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 1.25rem;
+    }
+    .card p { font-size: 0.82rem; color: #64748b; line-height: 1.6; margin-top: 0.25rem; }
+    .card ul { margin-top: 0.5rem; padding-left: 1.1rem; }
+    .card ul li { font-size: 0.8rem; color: #64748b; margin-bottom: 0.2rem; }
+
+    /* Feature badge */
+    .fbadge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px; margin-bottom: 0.5rem;
+    }
+    .fb-new  { background: #dcfce7; color: #166534; }
+    .fb-mod  { background: #fef3c7; color: #92400e; }
+    .fb-fix  { background: #fee2e2; color: #991b1b; }
+    .fb-api  { background: #ede9fe; color: #6d28d9; }
+
+    /* Phase list */
+    .phases { display: flex; flex-direction: column; gap: 1rem; }
+    .phase {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      overflow: hidden;
+    }
+    .phase-header {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.875rem 1.125rem;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    }
+    .phase-num {
+      width: 1.75rem; height: 1.75rem; border-radius: 50%;
+      background: #0f766e; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .phase-header h3 { margin: 0; font-size: 0.9rem; font-weight: 700; color: #0f172a; }
+    .phase-header .file { font-size: 0.75rem; color: #6366f1; font-family: monospace; margin-left: auto; }
+    .phase-body { padding: 1rem 1.125rem; }
+    .phase-body p { font-size: 0.83rem; color: #475569; line-height: 1.65; margin-bottom: 0.4rem; }
+    .phase-body .detail-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; }
+    .phase-body .detail-list li {
+      font-size: 0.8rem; color: #64748b;
+      padding-left: 1.1rem; position: relative;
+    }
+    .phase-body .detail-list li::before { content: "→"; position: absolute; left: 0; color: #0f766e; font-weight: 700; }
+
+    /* File tree */
+    .file-tree {
+      background: #0f172a; border-radius: 12px; padding: 1.5rem;
+      font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
+      font-size: 0.8rem; color: #94a3b8; overflow-x: auto;
+    }
+    .file-tree line { display: block; }
+    .file-tree .dir  { color: #7dd3fc; }
+    .file-tree .new  { color: #86efac; }
+    .file-tree .mod  { color: #fbbf24; }
+    .file-tree .note { color: #475569; font-style: italic; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+    th {
+      text-align: left; padding: 0.6rem 1rem;
+      background: #f1f5f9; color: #475569;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    td { padding: 0.65rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .mono { font-family: "Cascadia Code","Fira Code",monospace; font-size: 0.78rem; color: #4f46e5; }
+    .check { color: #16a34a; font-weight: 700; }
+    .pending { color: #d97706; font-weight: 600; }
+
+    /* Info / warn boxes */
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.875rem; color: #1e40af;
+    }
+    .warn-box {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.875rem; color: #92400e;
+    }
+    .success-box {
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-size: 0.875rem; color: #166534;
+    }
+
+    /* Stat bar */
+    .stat-bar {
+      display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .stat-item {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.875rem 1.25rem; flex: 1; min-width: 120px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .stat-item .val { font-size: 1.6rem; font-weight: 800; color: #0f766e; line-height: 1; }
+    .stat-item .lbl { font-size: 0.72rem; color: #94a3b8; margin-top: 0.25rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Code snippet */
+    .code {
+      background: #0f172a; border-radius: 8px; padding: 0.875rem 1rem;
+      font-family: "Cascadia Code","Fira Code",monospace; font-size: 0.78rem;
+      color: #94a3b8; overflow-x: auto; margin-top: 0.5rem;
+    }
+    .code .kw  { color: #7dd3fc; }
+    .code .str { color: #86efac; }
+    .code .fn  { color: #fbbf24; }
+    .code .cm  { color: #475569; font-style: italic; }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      font-size: 0.78rem; color: #94a3b8;
+      border-top: 1px solid #e2e8f0; padding-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="day-tag">Day 2</div>
+    <h1>Full CRUD + Users Management</h1>
+    <p>All write operations wired to Supabase — create, read, update and delete across Staff, Clients, Appointments, and a new Users admin page.</p>
+    <div class="meta">
+      <span class="pill">June 13, 2026</span>
+      <span class="pill">7 Phases Completed</span>
+      <span class="pill">3 New Files</span>
+      <span class="pill">5 Files Modified</span>
+      <span class="pill">0 Build Errors</span>
+    </div>
+  </div>
+
+  <!-- At a glance -->
+  <section>
+    <h2><span class="icon">⚡</span> At a Glance</h2>
+    <div class="stat-bar">
+      <div class="stat-item"><div class="val">7</div><div class="lbl">Phases</div></div>
+      <div class="stat-item"><div class="val">3</div><div class="lbl">New Files</div></div>
+      <div class="stat-item"><div class="val">5</div><div class="lbl">Modified</div></div>
+      <div class="stat-item"><div class="val">8</div><div class="lbl">New Dialogs</div></div>
+      <div class="stat-item"><div class="val">2</div><div class="lbl">API Routes</div></div>
+      <div class="stat-item"><div class="val">3</div><div class="lbl">Bugs Fixed</div></div>
+    </div>
+    <div class="success-box">
+      <strong>Status:</strong> All 7 phases implemented and compiling cleanly — <code>✓ Compiled in 64ms</code> with zero TypeScript errors.
+      The only pending prerequisite is adding <code>SUPABASE_SERVICE_ROLE_KEY</code> to <code>.env.local</code> for the admin Users page to function.
+    </div>
+  </section>
+
+  <!-- What changed -->
+  <section>
+    <h2><span class="icon">📋</span> Before vs After</h2>
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>Before (Day 1)</th><th>After (Day 2)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Staff — Edit</strong></td>
+          <td>No handler (button did nothing)</td>
+          <td class="check">✓ Full edit dialog — name, email, phone, role, specialization, work days, hours</td>
+        </tr>
+        <tr>
+          <td><strong>Staff — Delete</strong></td>
+          <td>No handler</td>
+          <td class="check">✓ Confirmation dialog with FK constraint error handling</td>
+        </tr>
+        <tr>
+          <td><strong>Staff — Activate/Deactivate</strong></td>
+          <td>No handler</td>
+          <td class="check">✓ Toggle with optimistic update + live green/grey indicator</td>
+        </tr>
+        <tr>
+          <td><strong>Client — Delete</strong></td>
+          <td>No handler (button was UI only)</td>
+          <td class="check">✓ Confirmation dialog, removes from list on success</td>
+        </tr>
+        <tr>
+          <td><strong>Appointments — New</strong></td>
+          <td>"New Appointment" button had no handler</td>
+          <td class="check">✓ Full create dialog with client &amp; staff selection, category, schedule, fee, color</td>
+        </tr>
+        <tr>
+          <td><strong>Appointments — Edit</strong></td>
+          <td>Not implemented</td>
+          <td class="check">✓ Edit dialog pre-populated from selected appointment</td>
+        </tr>
+        <tr>
+          <td><strong>Appointments — Delete</strong></td>
+          <td>Not implemented</td>
+          <td class="check">✓ Delete button in detail dialog, confirmation, removes from calendar</td>
+        </tr>
+        <tr>
+          <td><strong>Appointments — Confirm/Cancel</strong></td>
+          <td>Buttons rendered but no handlers</td>
+          <td class="check">✓ Status change wired — updates badge in detail dialog + calendar</td>
+        </tr>
+        <tr>
+          <td><strong>/users page</strong></td>
+          <td>Route did not exist</td>
+          <td class="check">✓ New page: list all profiles, change roles inline, invite users</td>
+        </tr>
+        <tr>
+          <td><strong>AppointmentCategory type</strong></td>
+          <td><code>"emergency"</code> (not in DB enum)</td>
+          <td class="check">✓ Fixed to <code>"other"</code> — matches Supabase enum exactly</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Phases detail -->
+  <section>
+    <h2><span class="icon">🔧</span> Implementation Phases</h2>
+    <div class="phases">
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">1</div>
+          <h3>Type Fix — AppointmentCategory</h3>
+          <span class="file">src/lib/types.ts</span>
+        </div>
+        <div class="phase-body">
+          <p>The TypeScript type had <code>"emergency"</code> as a category option, but the Supabase database enum only includes <code>"consultation" | "follow-up" | "treatment" | "review" | "other"</code>. This caused silent failures on insert/update. Fixed the type and all dropdown options to use <code>"other"</code>.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">2</div>
+          <h3>Staff — Edit, Delete, Toggle</h3>
+          <span class="file">staff/page.tsx</span>
+        </div>
+        <div class="phase-body">
+          <p>Complete staff management. <code>StaffCard</code> now accepts <code>onEdit</code>, <code>onDelete</code>, <code>onToggleActive</code>, and <code>toggling</code> props. All three operations call Supabase and update local state via <code>mapStaff()</code>.</p>
+          <ul class="detail-list">
+            <li><strong>Edit dialog</strong> (max-w-lg): name, email, phone, role (Select), specialization, 7 interactive day-toggle buttons (Sun–Sat, indigo when active), start time + end time inputs</li>
+            <li><strong>Delete dialog</strong> (max-w-sm): confirmation with the staff member's name. If the staff has appointments, Supabase returns a FK constraint error (<code>ON DELETE RESTRICT</code>) — this error is displayed inside the dialog rather than crashing</li>
+            <li><strong>Toggle</strong>: flips <code>is_active</code>, updates card status dot (green ↔ grey) instantly</li>
+            <li>Work day toggle pattern: clicking a day adds/removes it from <code>workDays: number[]</code> array (0=Sun … 6=Sat)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">3</div>
+          <h3>Client — Delete</h3>
+          <span class="file">clients/page.tsx</span>
+        </div>
+        <div class="phase-body">
+          <p>The "Delete" item in the client row dropdown was previously a no-op. Wired it to a confirmation dialog with <code>deleteTarget</code> state and a <code>handleDeleteClient()</code> handler that deletes from Supabase and filters the row out of the local list.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">4</div>
+          <h3>Appointments — Status Actions (Confirm / Cancel)</h3>
+          <span class="file">appointments/page.tsx</span>
+        </div>
+        <div class="phase-body">
+          <p>The Confirm and Cancel buttons in the appointment detail dialog were rendered but had no handlers. Added <code>handleStatusChange(id, status)</code> which calls <code>supabase.from("appointments").update({ status })</code>, then splices the result back into both the <code>appointments</code> array and the <code>selectedApt</code> state so the badge updates instantly.</p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">5</div>
+          <h3>Appointments — Create Dialog</h3>
+          <span class="file">appointments/page.tsx</span>
+        </div>
+        <div class="phase-body">
+          <p>"New Appointment" button now opens a full <code>max-w-2xl</code> form dialog with sections for appointment details, client &amp; staff, schedule, and additional options.</p>
+          <ul class="detail-list">
+            <li><strong>Lazy client loading</strong>: clients are not fetched on page mount — only when the dialog first opens, with a <code>clientsLoaded</code> guard to prevent duplicate fetches</li>
+            <li><strong>Client Select</strong>: dropdown populated from <code>clients</code> table (id, name, email)</li>
+            <li><strong>Staff Select</strong>: filtered to active staff only, shows specialization as secondary label</li>
+            <li><strong>Category</strong>: consultation, follow-up, treatment, review, other</li>
+            <li><strong>Color picker</strong>: 8 preset swatches — indigo, cyan, emerald, violet, pink, orange, amber, slate</li>
+            <li><strong>Fee</strong>: numeric input (step 0.01), <strong>Location</strong>: text, <strong>Notes</strong>: textarea</li>
+            <li><strong>Reminders</strong>: Switch toggle</li>
+            <li><strong>Denormalization</strong>: on insert, <code>client_name</code> and <code>staff_name</code> are looked up from state and written alongside the FK IDs (required by the DB schema)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">6</div>
+          <h3>Appointments — Edit &amp; Delete</h3>
+          <span class="file">appointments/page.tsx</span>
+        </div>
+        <div class="phase-body">
+          <p>Edit and delete actions added to the detail dialog footer. The edit flow required special handling because the detail dialog closes before the edit dialog opens — <code>editTargetId</code> state holds the appointment ID across this transition, while <code>selectedApt</code> is cleared.</p>
+          <ul class="detail-list">
+            <li><strong>Edit</strong>: pre-populates date as <code>ISO slice(0,10)</code> and time as <code>toTimeString().slice(0,5)</code>, same form fields as create</li>
+            <li><strong>Delete</strong>: red button in detail footer opens a <code>max-w-sm</code> confirmation, then removes from the calendar and list view</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-header">
+          <div class="phase-num">7</div>
+          <h3>Users Management Page + API Routes</h3>
+          <span class="file">users/page.tsx · api/admin/</span>
+        </div>
+        <div class="phase-body">
+          <p>A brand-new <code>/users</code> page for admins to manage all dashboard user accounts. Added to the sidebar between Staff and Reports.</p>
+          <ul class="detail-list">
+            <li><strong>Table</strong>: avatar, name, email, role (editable Select), status badge (Active/Inactive), joined date, actions dropdown</li>
+            <li><strong>Role change</strong>: inline Select dropdown per row → calls <code>PUT /api/admin/update-profile</code> → optimistic update in state</li>
+            <li><strong>Activate/Deactivate</strong>: dropdown toggle → same API route</li>
+            <li><strong>Self-protection</strong>: current user's row shows role as a Badge (not editable) and has no dropdown — prevents accidental self-demotion</li>
+            <li><strong>Invite dialog</strong>: name, email, role → <code>POST /api/admin/invite-user</code> → Supabase sends native invite email; profile created when they accept</li>
+            <li><strong>Service Role Key</strong>: both API routes use <code>createClient(URL, SUPABASE_SERVICE_ROLE_KEY)</code> to bypass RLS — required because the RLS policy only allows users to update their own profile row</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Bugs fixed -->
+  <section>
+    <h2><span class="icon">🐛</span> Bugs Fixed</h2>
+    <div class="grid-3">
+      <div class="card">
+        <span class="fbadge fb-fix">Bug Fix</span>
+        <h3>Duplicate State Declaration</h3>
+        <p><code>editTargetId</code> was declared twice in <code>appointments/page.tsx</code> — once at the top with all state variables, and once again lower in the function body (leftover from incremental writing). TypeScript compiler caught it: <em>"the name editTargetId is defined multiple times"</em> at line 423. Removed the duplicate.</p>
+      </div>
+      <div class="card">
+        <span class="fbadge fb-fix">Bug Fix</span>
+        <h3>Hydration Error</h3>
+        <p>A <code>&lt;Badge&gt;</code> component (renders as <code>&lt;div&gt;</code>) was nested inside <code>&lt;DialogDescription&gt;</code> (renders as <code>&lt;p&gt;</code>). This is invalid HTML — a block element inside an inline element. Fixed by moving the Badge outside the DialogDescription and giving the description <code>className="sr-only"</code>.</p>
+      </div>
+      <div class="card">
+        <span class="fbadge fb-fix">Bug Fix</span>
+        <h3>AppointmentCategory Mismatch</h3>
+        <p>TypeScript type included <code>"emergency"</code> but the Supabase database enum had no such value — it only has <code>"other"</code>. Any attempt to create or edit an appointment with that category would silently fail. Replaced across the type definition and all dropdown option lists.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- New file structure -->
+  <section>
+    <h2><span class="icon">📁</span> Files Changed Today</h2>
+    <div class="file-tree">
+      <line><span class="dir">d:\Dashboard\app\src\</span></line>
+      <line>├── <span class="dir">lib/</span></line>
+      <line>│   └── <span class="mod">types.ts</span>                          <span class="note"># AppointmentCategory: "emergency" → "other"</span></line>
+      <line>├── <span class="dir">components/layout/</span></line>
+      <line>│   └── <span class="mod">sidebar.tsx</span>                       <span class="note"># Added Users nav item (ShieldCheck icon)</span></line>
+      <line>└── <span class="dir">app/</span></line>
+      <line>    ├── <span class="dir">(dashboard)/</span></line>
+      <line>    │   ├── <span class="mod">staff/page.tsx</span>                <span class="note"># Edit dialog, delete dialog, toggle active</span></line>
+      <line>    │   ├── <span class="mod">clients/page.tsx</span>              <span class="note"># Delete confirmation dialog + handler</span></line>
+      <line>    │   ├── <span class="mod">appointments/page.tsx</span>         <span class="note"># Create, edit, delete dialogs + status change</span></line>
+      <line>    │   └── <span class="new">users/</span></line>
+      <line>    │       └── <span class="new">page.tsx</span>                  <span class="note"># NEW — full user management page</span></line>
+      <line>    └── <span class="dir">api/admin/</span>                        <span class="note"># NEW folder — server-only admin routes</span></line>
+      <line>        ├── <span class="new">update-profile/route.ts</span>       <span class="note"># PUT — update role / is_active via service role</span></line>
+      <line>        └── <span class="new">invite-user/route.ts</span>          <span class="note"># POST — invite user via Supabase admin SDK</span></line>
+      <line></line>
+      <line><span class="dir">d:\Dashboard\app\public\</span></line>
+      <line>├── project-summary.html                  <span class="note"># Day 1 summary (unchanged)</span></line>
+      <line>└── <span class="new">day-2-summary.html</span>                    <span class="note"># This file</span></line>
+    </div>
+    <div style="margin-top:0.75rem;font-size:0.78rem;color:#64748b;display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <span><span style="color:#86efac;">■</span> Green = new file</span>
+      <span><span style="color:#fbbf24;">■</span> Yellow = modified file</span>
+    </div>
+  </section>
+
+  <!-- Technical decisions -->
+  <section>
+    <h2><span class="icon">💡</span> Key Technical Decisions</h2>
+    <table>
+      <thead>
+        <tr><th>Decision</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Lazy client loading for appointment dialog</strong></td>
+          <td>Clients are not fetched when the appointments page loads — only when the create/edit dialog first opens. A <code>clientsLoaded</code> boolean prevents duplicate fetches on subsequent opens. This avoids an unnecessary network call for users who never open the dialog in a session.</td>
+        </tr>
+        <tr>
+          <td><strong>Separate <code>editTargetId</code> state</strong></td>
+          <td>When editing an appointment, the detail dialog closes before the edit dialog opens. <code>selectedApt</code> is cleared by the detail dialog's <code>onOpenChange</code>. A separate <code>editTargetId</code> string state persists the ID through this transition without being tied to the dialog's open/close cycle.</td>
+        </tr>
+        <tr>
+          <td><strong>FK error surfaced in delete dialog</strong></td>
+          <td>The <code>appointments.staff_id</code> column has <code>ON DELETE RESTRICT</code>. Rather than pre-checking or hiding the delete option, the Supabase error string is caught and displayed inside the delete dialog — simpler and more transparent to the user.</td>
+        </tr>
+        <tr>
+          <td><strong>Service role key for admin ops</strong></td>
+          <td>The <code>profiles</code> table RLS policy <em>"Users can update own profile"</em> only allows self-update. An admin changing another user's role must bypass RLS. The service role client is used server-side only (API routes, never client components) and never exposed to the browser via a <code>NEXT_PUBLIC_</code> prefix.</td>
+        </tr>
+        <tr>
+          <td><strong>Self-protection on Users page</strong></td>
+          <td>The current user's row shows role as a read-only Badge and has no actions dropdown. This prevents an admin from accidentally demoting themselves or deactivating their own account — a scenario that would lock them out of the admin functions.</td>
+        </tr>
+        <tr>
+          <td><strong>Denormalized client_name / staff_name</strong></td>
+          <td>The <code>appointments</code> table stores both the FK IDs and the human-readable names. On create/update, the names are looked up from the in-memory state and written alongside the IDs. This avoids expensive joins on every calendar render and matches the existing schema design from Day 1.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- API routes detail -->
+  <section>
+    <h2><span class="icon">🔌</span> New API Routes</h2>
+    <div class="grid-2">
+      <div class="card">
+        <span class="fbadge fb-api">Server Route</span>
+        <h3>PUT /api/admin/update-profile</h3>
+        <p>Updates another user's <code>role</code> and/or <code>is_active</code> in the <code>profiles</code> table.</p>
+        <ul>
+          <li>Auth guard: verifies caller is authenticated</li>
+          <li>Role guard: verifies caller's profile role is <code>"admin"</code></li>
+          <li>Uses service role client to bypass RLS</li>
+          <li>Body: <code>{ targetId, role?, is_active? }</code></li>
+          <li>Returns: updated profile row</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="fbadge fb-api">Server Route</span>
+        <h3>POST /api/admin/invite-user</h3>
+        <p>Sends a Supabase invite email to a new user. Supabase handles the email; when the user accepts, the <code>handle_new_user()</code> DB trigger auto-creates their profile row.</p>
+        <ul>
+          <li>Auth guard + admin role check</li>
+          <li>Uses <code>admin.auth.admin.inviteUserByEmail()</code></li>
+          <li>Body: <code>{ email, name, role }</code></li>
+          <li>Returns: <code>{ user: data.user }</code></li>
+          <li>Requires: <code>SUPABASE_SERVICE_ROLE_KEY</code> in <code>.env.local</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pending -->
+  <section>
+    <h2><span class="icon">⏳</span> Pending / Next Steps</h2>
+    <table>
+      <thead>
+        <tr><th>Item</th><th>Status</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SUPABASE_SERVICE_ROLE_KEY</strong></td>
+          <td><span class="pending">Needs user action</span></td>
+          <td>Add to <code>.env.local</code> from Supabase Dashboard → Project Settings → API → <em>service_role</em>. Without it, the Users page role/status changes and invite dialog return 500.</td>
+        </tr>
+        <tr>
+          <td><strong>Email notifications on appointment assignment</strong></td>
+          <td><span class="pending">Deferred</span></td>
+          <td>User chose to skip this for now. Can be added later using Resend (or another provider) — send email when a new appointment is assigned to a staff member.</td>
+        </tr>
+        <tr>
+          <td><strong>End-to-end browser testing</strong></td>
+          <td><span class="pending">Pending</span></td>
+          <td>All CRUD operations compile and logic is correct — full browser test across all 10 features in the verification checklist has not yet been performed.</td>
+        </tr>
+        <tr>
+          <td><strong>Staff appointment count sync</strong></td>
+          <td><span class="pending">Future</span></td>
+          <td>Creating/deleting appointments does not currently update <code>staff.total_appointments</code>. Could be a DB trigger or a manual update in the handlers.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Verification checklist -->
+  <section>
+    <h2><span class="icon">✅</span> Verification Checklist</h2>
+    <div class="info-box">
+      Run through these after adding the service role key and restarting the dev server:
+    </div>
+    <div style="margin-top:1rem;">
+      <table>
+        <thead><tr><th>#</th><th>Test</th><th>Expected Result</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Staff → hover card → Edit</td><td>Edit dialog opens pre-filled; save changes name/schedule on card</td></tr>
+          <tr><td>2</td><td>Staff → Delete a staff with no appointments</td><td>Confirmation → staff card removed</td></tr>
+          <tr><td>3</td><td>Staff → Delete a staff with appointments</td><td>Error message shown inside dialog: FK constraint</td></tr>
+          <tr><td>4</td><td>Staff → Deactivate</td><td>Status dot turns grey; card updates; Activate shown next time</td></tr>
+          <tr><td>5</td><td>Clients → Delete a client</td><td>Confirmation dialog → row removed from table</td></tr>
+          <tr><td>6</td><td>Appointments → click event → Confirm</td><td>Status badge changes to Confirmed instantly</td></tr>
+          <tr><td>7</td><td>Appointments → New Appointment</td><td>Dialog opens; client/staff dropdowns populate; submit adds to calendar</td></tr>
+          <tr><td>8</td><td>Appointments → Edit existing</td><td>Edit dialog pre-filled; save updates calendar entry</td></tr>
+          <tr><td>9</td><td>Appointments → Delete</td><td>Confirmation → event removed from calendar</td></tr>
+          <tr><td>10</td><td>Users page → Change role</td><td>Dropdown updates; persists after page refresh</td></tr>
+          <tr><td>11</td><td>Users page → Invite dialog</td><td>Success message shown; Supabase sends invite email</td></tr>
+          <tr><td>12</td><td>Users page → your own row</td><td>Role shown as Badge only; no dropdown menu visible</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Nexus Dashboard · Day 2 — Full CRUD + Users Management · June 13, 2026
+  </footer>
+
+</div>
+</body>
+</html>

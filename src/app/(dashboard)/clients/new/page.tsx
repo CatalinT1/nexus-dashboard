@@ -9,36 +9,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 
 const tagOptions = ["corporate", "premium", "referral", "monthly", "startup", "creative", "enterprise", "personal"];
 
 export default function NewClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", company: "", status: "active",
     street: "", city: "", state: "", zip: "", notes: "",
   });
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
-  };
+  const toggleTag = (tag: string) =>
+    setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
+    setError("");
+    const supabase = createClient();
+    const { error: err } = await supabase.from("clients").insert({
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      company: form.company || null,
+      status: form.status,
+      address_street: form.street || null,
+      address_city: form.city || null,
+      address_state: form.state || null,
+      address_zip: form.zip || null,
+      address_country: null,
+      notes: form.notes || null,
+      tags: selectedTags,
+      total_appointments: 0,
+      total_revenue: 0,
+    });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
     router.push("/clients");
   };
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
-
   return (
     <div className="space-y-6 max-w-2xl">
-      {/* Header */}
       <div>
         <Button variant="ghost" size="sm" asChild className="text-slate-500 -ml-2 mb-3">
           <Link href="/clients"><ArrowLeft className="h-3.5 w-3.5" />Back to Clients</Link>
@@ -48,7 +66,6 @@ export default function NewClientPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Personal info */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -74,7 +91,7 @@ export default function NewClientPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={v => setForm(prev => ({ ...prev, status: v }))}>
+              <Select value={form.status} onValueChange={(v) => setForm((prev) => ({ ...prev, status: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
@@ -87,7 +104,6 @@ export default function NewClientPage() {
           </CardContent>
         </Card>
 
-        {/* Address */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -114,7 +130,6 @@ export default function NewClientPage() {
           </CardContent>
         </Card>
 
-        {/* Tags */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -123,7 +138,7 @@ export default function NewClientPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {tagOptions.map(tag => (
+              {tagOptions.map((tag) => (
                 <button
                   key={tag}
                   type="button"
@@ -141,7 +156,6 @@ export default function NewClientPage() {
           </CardContent>
         </Card>
 
-        {/* Notes */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -149,16 +163,14 @@ export default function NewClientPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              placeholder="Add any notes about this client..."
-              value={form.notes}
-              onChange={set("notes")}
-              rows={4}
-            />
+            <Textarea placeholder="Add any notes about this client..." value={form.notes} onChange={set("notes")} rows={4} />
           </CardContent>
         </Card>
 
-        {/* Actions */}
+        {error && (
+          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+        )}
+
         <div className="flex items-center justify-end gap-3 pb-4">
           <Button type="button" variant="outline" asChild>
             <Link href="/clients">Cancel</Link>
