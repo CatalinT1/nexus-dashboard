@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Dashboard — Complete Feature Overview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc; color: #1e293b; line-height: 1.6; padding: 2rem 1rem;
+    }
+    .page { max-width: 1040px; margin: 0 auto; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #312e81 60%, #4f46e5 100%);
+      border-radius: 16px; padding: 3rem 2.5rem; color: white; margin-bottom: 2.5rem;
+    }
+    .hero .tag {
+      display: inline-block; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 999px;
+      padding: 0.25rem 1rem; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .hero h1 { font-size: 2.25rem; font-weight: 900; letter-spacing: -0.75px; line-height: 1.15; }
+    .hero p { margin-top: 0.75rem; opacity: 0.8; font-size: 1.05rem; max-width: 680px; }
+    .hero .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
+    .pill {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px; padding: 0.3rem 1rem; font-size: 0.82rem; font-weight: 500;
+    }
+
+    /* Sections */
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.2rem; font-weight: 800; color: #0f172a;
+      margin-bottom: 1.25rem; padding-bottom: 0.6rem;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    h3 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 0.3rem; }
+
+    /* Score bar */
+    .score-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .score-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1.1rem; text-align: center;
+    }
+    .score-card .val { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .score-card .lbl { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.3rem; color: #94a3b8; }
+    .sc-green .val  { color: #16a34a; }
+    .sc-yellow .val { color: #d97706; }
+    .sc-red .val    { color: #dc2626; }
+    .sc-slate .val  { color: #64748b; }
+    .sc-blue .val   { color: #2563eb; }
+
+    /* Status badges */
+    .s-done     { font-size: 0.7rem; font-weight: 700; background: #dcfce7; color: #15803d; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+    .s-partial  { font-size: 0.7rem; font-weight: 700; background: #fef9c3; color: #92400e; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+    .s-missing  { font-size: 0.7rem; font-weight: 700; background: #fee2e2; color: #b91c1c; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+    .s-na       { font-size: 0.7rem; font-weight: 700; background: #f1f5f9; color: #94a3b8; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+    .s-later    { font-size: 0.7rem; font-weight: 700; background: #ede9fe; color: #6d28d9; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+
+    /* Priority chip */
+    .p1 { font-size: 0.65rem; font-weight: 800; background: #fee2e2; color: #991b1b; padding: 0.1rem 0.55rem; border-radius: 4px; display: inline-block; }
+    .p2 { font-size: 0.65rem; font-weight: 800; background: #fef3c7; color: #b45309; padding: 0.1rem 0.55rem; border-radius: 4px; display: inline-block; }
+    .p3 { font-size: 0.65rem; font-weight: 800; background: #dbeafe; color: #1e40af; padding: 0.1rem 0.55rem; border-radius: 4px; display: inline-block; }
+    .p4 { font-size: 0.65rem; font-weight: 800; background: #f1f5f9; color: #64748b; padding: 0.1rem 0.55rem; border-radius: 4px; display: inline-block; }
+
+    /* Category table */
+    .cat-table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; font-size: 0.84rem; margin-bottom: 1.5rem; }
+    .cat-table th {
+      text-align: left; padding: 0.6rem 1rem; background: #f8fafc;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b;
+    }
+    .cat-table td { padding: 0.65rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .cat-table tr:last-child td { border-bottom: none; }
+    .cat-table .section-head td {
+      background: #f8fafc; font-size: 0.72rem; font-weight: 800;
+      color: #475569; text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 0.45rem 1rem; border-top: 1px solid #e2e8f0;
+    }
+    .mono { font-family: "Cascadia Code", monospace; font-size: 0.77rem; color: #4f46e5; }
+    .note { font-size: 0.77rem; color: #64748b; }
+
+    /* Roadmap cards */
+    .roadmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .rm-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.2rem;
+      border-left: 4px solid transparent;
+    }
+    .rm-card.p1-border { border-left-color: #dc2626; }
+    .rm-card.p2-border { border-left-color: #f59e0b; }
+    .rm-card.p3-border { border-left-color: #3b82f6; }
+    .rm-card.p4-border { border-left-color: #94a3b8; }
+    .rm-card h3 { font-size: 0.88rem; font-weight: 700; color: #0f172a; margin: 0.4rem 0 0.35rem; }
+    .rm-card p { font-size: 0.8rem; color: #64748b; line-height: 1.6; }
+    .rm-card ul { margin-top: 0.5rem; padding-left: 1rem; }
+    .rm-card ul li { font-size: 0.78rem; color: #64748b; margin-bottom: 0.2rem; }
+    .rm-card .effort {
+      display: inline-block; margin-top: 0.6rem;
+      font-size: 0.68rem; font-weight: 600; color: #94a3b8;
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+      padding: 0.15rem 0.5rem;
+    }
+
+    /* What's built panel */
+    .built-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem; }
+    .built-item {
+      background: white; border: 1px solid #dcfce7; border-radius: 10px;
+      padding: 0.875rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem;
+    }
+    .built-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; margin-top: 0.35rem; flex-shrink: 0; }
+    .built-item h4 { font-size: 0.83rem; font-weight: 700; color: #0f172a; }
+    .built-item p  { font-size: 0.76rem; color: #64748b; margin-top: 0.1rem; }
+
+    /* Info / warn / success boxes */
+    .info-box  { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.25rem; font-size: 0.875rem; color: #1e40af; }
+    .warn-box  { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem 1.25rem; font-size: 0.875rem; color: #92400e; }
+
+    /* Context callout */
+    .callout {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 1px solid #bae6fd; border-radius: 12px; padding: 1.25rem 1.5rem;
+      font-size: 0.875rem; color: #0369a1; margin-bottom: 1.5rem;
+    }
+    .callout strong { display: block; margin-bottom: 0.35rem; font-size: 0.95rem; color: #0c4a6e; }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      font-size: 0.78rem; color: #94a3b8;
+      border-top: 1px solid #e2e8f0; padding-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="tag">Complete Feature Overview</div>
+    <h1>Nexus Dashboard<br/>vs. The Full SaaS Checklist</h1>
+    <p>Every feature category from the SaaS core features reference mapped against what's built, what's broken, what's missing, and what's on the roadmap — tailored to a clinic &amp; appointment management product.</p>
+    <div class="meta">
+      <span class="pill">June 13, 2026</span>
+      <span class="pill">30 SaaS Categories Reviewed</span>
+      <span class="pill">Based on Days 1–3 + Code Audit</span>
+    </div>
+  </div>
+
+  <!-- Context -->
+  <div class="callout">
+    <strong>How to read this document</strong>
+    Not every SaaS feature is relevant for every product. This overview filters the 30-category SaaS reference through the lens of a <strong>clinic / appointment management platform</strong> and clearly marks what is applicable, what is out of scope, and what should be prioritised next. Features like enterprise SCIM provisioning or blockchain audit logs are noted but not treated as urgent gaps.
+  </div>
+
+  <!-- Score -->
+  <section>
+    <h2>📊 At a Glance</h2>
+    <div class="score-bar">
+      <div class="score-card sc-green"><div class="val">28</div><div class="lbl">Features Working</div></div>
+      <div class="score-card sc-yellow"><div class="val">9</div><div class="lbl">Partially Done</div></div>
+      <div class="score-card sc-red"><div class="val">31</div><div class="lbl">Missing (Relevant)</div></div>
+      <div class="score-card sc-slate"><div class="val">40+</div><div class="lbl">Out of Scope</div></div>
+      <div class="score-card sc-blue"><div class="val">~35%</div><div class="lbl">SaaS Completeness</div></div>
+    </div>
+    <div class="warn-box">
+      <strong>Honest assessment:</strong> The core domain logic (clients, staff, appointments, users) is well-built and live on Supabase. But the surrounding SaaS infrastructure — billing, notifications, search, settings persistence, audit logs, onboarding — is largely absent. These are the features that turn a working dashboard into a shippable product.
+    </div>
+  </section>
+
+  <!-- What's working -->
+  <section>
+    <h2>✅ What's Fully Built &amp; Working</h2>
+    <div class="built-grid">
+      <div class="built-item"><div class="built-dot"></div><div><h4>Email/Password Auth</h4><p>Sign in, sign out, route protection via proxy.ts</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Password Reset Flow</h4><p>Forgot password → email → reset page → redirect</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Role-Based Access (RBAC)</h4><p>admin / manager / staff with Supabase RLS on all tables</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Dashboard KPIs &amp; Charts</h4><p>Live data — clients, appointments, revenue, active staff</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Client CRM — Full CRUD</h4><p>Create, view, delete with search, filter, sort</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Client Detail Page</h4><p>Profile, activity timeline, appointments history</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Appointments Calendar</h4><p>Month / week / list views, color-coded, staff filter</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Appointment Full CRUD</h4><p>Create, edit, delete, confirm, cancel</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Inline Client Creation</h4><p>Create new client directly from the appointment dialog</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Staff Full CRUD</h4><p>Add, edit (schedule + work days), delete, toggle active</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Reports &amp; Analytics</h4><p>Revenue chart, top clients, top staff — live DB data</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>User Profile Edit</h4><p>Name, phone, department, change password</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Users Management Page</h4><p>List all profiles, change roles, activate/deactivate</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>User Invitation</h4><p>Invite by email via Supabase admin SDK</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>In-App Notifications</h4><p>Bell dropdown with live data from notifications table</p></div></div>
+      <div class="built-item"><div class="built-dot"></div><div><h4>Quick-Create from Header</h4><p>"New" dropdown → opens create dialogs directly</p></div></div>
+    </div>
+  </section>
+
+  <!-- Full audit by SaaS category -->
+  <section>
+    <h2>📋 Full Audit — All 30 SaaS Categories</h2>
+
+    <table class="cat-table">
+      <thead>
+        <tr>
+          <th style="width:28%">Feature</th>
+          <th style="width:14%">Status</th>
+          <th>Details &amp; Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- AUTH -->
+        <tr class="section-head"><td colspan="3">1. Authentication &amp; Identity</td></tr>
+        <tr><td><strong>Email + password login</strong></td><td><span class="s-done">✓ Done</span></td><td>Supabase signInWithPassword, error messages, redirect</td></tr>
+        <tr><td><strong>Password reset</strong></td><td><span class="s-done">✓ Done</span></td><td>Full email → reset-password page → updateUser flow</td></tr>
+        <tr><td><strong>Session management</strong></td><td><span class="s-done">✓ Done</span></td><td>JWT via Supabase, validated server-side in proxy.ts on every request</td></tr>
+        <tr><td><strong>Email verification</strong></td><td><span class="s-done">✓ Done</span></td><td>Handled by Supabase on signup</td></tr>
+        <tr><td><strong>Social Login (Google, etc.)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No OAuth providers configured. Supabase supports Google/GitHub natively — just needs enabling + a button on the login page.</td></tr>
+        <tr><td><strong>Multi-Factor Authentication (2FA)</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Settings page has a 2FA section UI but it is purely decorative — no TOTP, no SMS codes, no enrollment flow wired to Supabase.</td></tr>
+        <tr><td><strong>Account lockout / brute-force</strong></td><td><span class="s-na">— Supabase</span></td><td>Supabase handles rate limiting on auth endpoints at infrastructure level.</td></tr>
+        <tr><td><strong>Magic links / passwordless</strong></td><td><span class="s-later">Later</span></td><td>Supabase supports it natively. Not needed yet for a closed-user app.</td></tr>
+        <tr><td><strong>SSO (SAML / OIDC)</strong></td><td><span class="s-later">Later</span></td><td>Enterprise feature. Not relevant at current stage.</td></tr>
+        <tr><td><strong>"Log out all devices"</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way to revoke all sessions. Supabase supports <span class="mono">signOut({ scope: "global" })</span> — small addition.</td></tr>
+
+        <!-- AUTHORIZATION -->
+        <tr class="section-head"><td colspan="3">2. Authorization &amp; Access Control</td></tr>
+        <tr><td><strong>Role-Based Access (RBAC)</strong></td><td><span class="s-done">✓ Done</span></td><td>admin / manager / staff. RLS on all 7 DB tables.</td></tr>
+        <tr><td><strong>Admin can manage roles</strong></td><td><span class="s-done">✓ Done</span></td><td>Users page — inline role Select, calls service-role API</td></tr>
+        <tr><td><strong>API tokens / service accounts</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No programmatic access tokens. Needed if external tools or automations need to call the data.</td></tr>
+        <tr><td><strong>Fine-grained permissions</strong></td><td><span class="s-missing">✗ Missing</span></td><td>3 coarse roles only. No custom roles, no per-resource permissions. Staff can't be restricted to their own clients only.</td></tr>
+        <tr><td><strong>Impersonation ("Login as user")</strong></td><td><span class="s-later">Later</span></td><td>Useful for support. Can be implemented with service role client.</td></tr>
+
+        <!-- MULTI-TENANCY -->
+        <tr class="section-head"><td colspan="3">3. Multi-Tenancy</td></tr>
+        <tr><td><strong>Workspaces / Organizations</strong></td><td><span class="s-missing">✗ Missing</span></td><td><strong>Critical if this is a SaaS product.</strong> Currently the entire database is one shared clinic. Every customer who buys the product would see everyone else's data. Multi-tenancy (via an <span class="mono">organization_id</span> column on every table + RLS) is the #1 architectural gap.</td></tr>
+        <tr><td><strong>Tenant isolation</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Follows from above — RLS currently scoped by auth role, not by tenant.</td></tr>
+        <tr><td><strong>Custom domains / subdomains</strong></td><td><span class="s-later">Later</span></td><td>Enterprise/growth feature. Not needed at MVP.</td></tr>
+        <tr><td><strong>White-labeling</strong></td><td><span class="s-later">Later</span></td><td>Enterprise feature. Not needed at MVP.</td></tr>
+
+        <!-- USER MANAGEMENT -->
+        <tr class="section-head"><td colspan="3">4. User &amp; Team Management</td></tr>
+        <tr><td><strong>User profiles</strong></td><td><span class="s-done">✓ Done</span></td><td>name, email, phone, department, role, is_active</td></tr>
+        <tr><td><strong>Email invitations</strong></td><td><span class="s-done">✓ Done</span></td><td>Supabase admin.inviteUserByEmail — invite dialog on /users</td></tr>
+        <tr><td><strong>User directory</strong></td><td><span class="s-done">✓ Done</span></td><td>/users page with table, role/status management</td></tr>
+        <tr><td><strong>User lifecycle (activate/deactivate)</strong></td><td><span class="s-done">✓ Done</span></td><td>is_active toggle on /users page</td></tr>
+        <tr><td><strong>Avatar / profile photo</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Camera icon shown on /profile page. No file upload or Supabase Storage integration. Shows initials only.</td></tr>
+        <tr><td><strong>Offboarding / resource transfer</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Deactivating a user doesn't reassign their appointments or clients.</td></tr>
+        <tr><td><strong>SCIM provisioning</strong></td><td><span class="s-na">— N/A</span></td><td>Enterprise/identity-provider feature. Not relevant at current stage.</td></tr>
+
+        <!-- BILLING -->
+        <tr class="section-head"><td colspan="3">5. Subscription, Billing &amp; Payments</td></tr>
+        <tr><td><strong>Pricing plans / tiers</strong></td><td><span class="s-missing">✗ Missing</span></td><td rowspan="8"><strong>Billing is completely absent.</strong> If Nexus Dashboard is a product sold to clinics, it needs subscription management. Stripe + Supabase integration is the standard pattern. At minimum: a plan table, a Stripe customer ID on each tenant, and a billing portal. Without billing, there is no monetization.</td></tr>
+        <tr><td><strong>Stripe / payment processing</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Invoicing &amp; receipts</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Free trial</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Upgrade / downgrade plans</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Self-service billing portal</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Usage limits / quotas</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+        <tr><td><strong>Dunning (failed payment retries)</strong></td><td><span class="s-missing">✗ Missing</span></td></tr>
+
+        <!-- ONBOARDING -->
+        <tr class="section-head"><td colspan="3">6. Onboarding</td></tr>
+        <tr><td><strong>Sample / demo data</strong></td><td><span class="s-done">✓ Done</span></td><td>Seed data: 8 clients, 4 staff, 10 appointments, 12 months revenue</td></tr>
+        <tr><td><strong>Empty states</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Some pages show "No data" messages. No guided empty state with a CTA (e.g., "Add your first client →").</td></tr>
+        <tr><td><strong>Welcome / onboarding flow</strong></td><td><span class="s-missing">✗ Missing</span></td><td>New users are dropped straight into the dashboard with no setup wizard or guided tour. No checklist, no tooltips, no first-login experience.</td></tr>
+        <tr><td><strong>Activation emails (drip)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No post-signup email sequence nudging users to complete setup.</td></tr>
+
+        <!-- DASHBOARD / UI -->
+        <tr class="section-head"><td colspan="3">7. Dashboard &amp; Core UI</td></tr>
+        <tr><td><strong>Main dashboard with KPIs</strong></td><td><span class="s-done">✓ Done</span></td><td>Live revenue, clients, appointments, staff metrics with charts</td></tr>
+        <tr><td><strong>Sidebar navigation</strong></td><td><span class="s-done">✓ Done</span></td><td>Collapsible, active state, tooltips on collapse</td></tr>
+        <tr><td><strong>Filtering &amp; sorting</strong></td><td><span class="s-done">✓ Done</span></td><td>Clients page has multi-field sort + status filter</td></tr>
+        <tr><td><strong>Global search</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Search bar renders in the header but has no handler. Completely non-functional. Should search clients and appointments at minimum.</td></tr>
+        <tr><td><strong>Dark mode</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Toggle button exists and switches icon, but no dark theme is applied to any element.</td></tr>
+        <tr><td><strong>Bulk actions</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No select-all, bulk delete, or bulk status change on any list.</td></tr>
+        <tr><td><strong>Pagination</strong></td><td><span class="s-missing">✗ Missing</span></td><td>All lists render every result. Will become slow and unreadable as data grows. No infinite scroll or page controls.</td></tr>
+        <tr><td><strong>Keyboard shortcuts</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No keyboard shortcut system (Cmd+K palette, etc.)</td></tr>
+        <tr><td><strong>Responsive / mobile web</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Tailwind responsive classes are used in places but the app is not optimized for small screens. Sidebar and table layouts break on mobile.</td></tr>
+        <tr><td><strong>Loading skeletons</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Spinner circles used. No skeleton screen placeholders for perceived performance.</td></tr>
+        <tr><td><strong>Error pages (404, 500)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No custom 404 or error boundary pages. Next.js defaults show.</td></tr>
+
+        <!-- NOTIFICATIONS -->
+        <tr class="section-head"><td colspan="3">8. Notifications</td></tr>
+        <tr><td><strong>In-app notification bell</strong></td><td><span class="s-done">✓ Done</span></td><td>Live from notifications table, unread count badge, relative timestamps</td></tr>
+        <tr><td><strong>Mark as read</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Clicking a notification does not update is_read in DB. Badge count never decrements.</td></tr>
+        <tr><td><strong>"View all" notifications page</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Button renders but goes nowhere. No /notifications route.</td></tr>
+        <tr><td><strong>Email notifications</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Deliberately deferred. No transactional emails (appointment confirmation, staff assignment, reminders). Need Resend / SendGrid integration.</td></tr>
+        <tr><td><strong>Notification preferences</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Settings page has email + push toggles UI. Not wired to any backend.</td></tr>
+        <tr><td><strong>SMS / push notifications</strong></td><td><span class="s-later">Later</span></td><td>Nice to have for appointment reminders. Twilio for SMS. Not urgent.</td></tr>
+
+        <!-- COMMUNICATION -->
+        <tr class="section-head"><td colspan="3">9. Communication &amp; Email</td></tr>
+        <tr><td><strong>Auth transactional emails</strong></td><td><span class="s-done">✓ Done</span></td><td>Supabase sends invite, password reset, and email verification emails natively</td></tr>
+        <tr><td><strong>Appointment confirmation emails</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No email sent when an appointment is created, confirmed, or cancelled. High value for the end-client experience.</td></tr>
+        <tr><td><strong>Appointment reminder emails</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No scheduled reminder 24h or 1h before appointment. Needs a job scheduler (cron / Supabase Edge Function).</td></tr>
+        <tr><td><strong>Staff assignment email</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No notification to staff when assigned an appointment.</td></tr>
+
+        <!-- COLLABORATION -->
+        <tr class="section-head"><td colspan="3">10. Collaboration</td></tr>
+        <tr><td><strong>Client activity feed</strong></td><td><span class="s-done">✓ Done</span></td><td>client_activities table, timeline on client detail page</td></tr>
+        <tr><td><strong>Add note to client</strong></td><td><span class="s-missing">✗ Missing</span></td><td>"Add Note" button on client detail → Notes tab has no handler. Cannot add activity entries from the UI.</td></tr>
+        <tr><td><strong>Real-time collaboration</strong></td><td><span class="s-na">— N/A</span></td><td>Multiple staff editing the same record simultaneously is not a use case for this app type.</td></tr>
+        <tr><td><strong>@mentions / comments</strong></td><td><span class="s-later">Later</span></td><td>Could be useful for notes on appointments or clients. Not critical now.</td></tr>
+
+        <!-- SEARCH -->
+        <tr class="section-head"><td colspan="3">11. Search</td></tr>
+        <tr><td><strong>Client-side list search</strong></td><td><span class="s-done">✓ Done</span></td><td>Clients page has real-time JS filter on name / email / company</td></tr>
+        <tr><td><strong>Global header search</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Input renders but has zero functionality. Should search across clients + appointments at minimum.</td></tr>
+        <tr><td><strong>Full-text / fuzzy search</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Supabase supports <span class="mono">ilike</span> and full-text search natively. No backend search query wired.</td></tr>
+
+        <!-- REPORTING -->
+        <tr class="section-head"><td colspan="3">12. Reporting &amp; Analytics</td></tr>
+        <tr><td><strong>Built-in reports</strong></td><td><span class="s-done">✓ Done</span></td><td>Revenue trend, top clients, top staff, monthly appointments</td></tr>
+        <tr><td><strong>Data visualization</strong></td><td><span class="s-done">✓ Done</span></td><td>AreaChart, BarChart, LineChart via Recharts</td></tr>
+        <tr><td><strong>Data export (CSV / PDF)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No export button anywhere. Reports and client/appointment lists are view-only.</td></tr>
+        <tr><td><strong>Scheduled reports</strong></td><td><span class="s-later">Later</span></td><td>Auto-email a weekly/monthly summary. Needs Edge Functions + email provider.</td></tr>
+        <tr><td><strong>Real-time / live metrics</strong></td><td><span class="s-later">Later</span></td><td>Supabase Realtime subscriptions could power live dashboards.</td></tr>
+
+        <!-- API / INTEGRATIONS -->
+        <tr class="section-head"><td colspan="3">13. Integrations &amp; API</td></tr>
+        <tr><td><strong>Admin API routes</strong></td><td><span class="s-done">✓ Done</span></td><td>/api/admin/update-profile, /api/admin/invite-user (internal)</td></tr>
+        <tr><td><strong>Public REST API</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No external API for third-party tools or customers to consume data programmatically.</td></tr>
+        <tr><td><strong>Webhooks</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No outbound events when appointments are created, cancelled, etc. Needed for integrations.</td></tr>
+        <tr><td><strong>Calendar integrations (Google, Outlook)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>High value for a clinic app — sync appointments to staff's personal calendars. Google Calendar API / CalDAV.</td></tr>
+        <tr><td><strong>Zapier / Make / n8n</strong></td><td><span class="s-later">Later</span></td><td>No-code automation marketplace. Needs public API first.</td></tr>
+
+        <!-- FILES -->
+        <tr class="section-head"><td colspan="3">14. File &amp; Document Management</td></tr>
+        <tr><td><strong>Avatar / photo upload</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Camera icon on /profile but no Supabase Storage integration. No file upload anywhere.</td></tr>
+        <tr><td><strong>Client document attachments</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Clinics often need to attach forms, prescriptions, ID documents to client profiles. Not built.</td></tr>
+        <tr><td><strong>Appointment attachments</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way to attach files (lab results, reports) to an appointment.</td></tr>
+
+        <!-- SUPPORT -->
+        <tr class="section-head"><td colspan="3">15. Customer Support</td></tr>
+        <tr><td><strong>Help / Support page</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>/help redirects to /settings. No real help page, FAQ, or knowledge base.</td></tr>
+        <tr><td><strong>In-app feedback / bug report</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way for users to report issues or request features from within the app.</td></tr>
+        <tr><td><strong>Status page</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No public uptime page. Users have no way to check if the service is having issues.</td></tr>
+
+        <!-- ADMIN PANEL -->
+        <tr class="section-head"><td colspan="3">16. Admin Panel &amp; Internal Tooling</td></tr>
+        <tr><td><strong>Users management</strong></td><td><span class="s-done">✓ Done</span></td><td>/users page — list, role change, activate/deactivate, invite</td></tr>
+        <tr><td><strong>System health / monitoring</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No admin view of error rates, queue depths, DB health, or API performance.</td></tr>
+        <tr><td><strong>Feature flags</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way to toggle features on/off per user or tenant without a code deploy.</td></tr>
+
+        <!-- SECURITY -->
+        <tr class="section-head"><td colspan="3">17. Security</td></tr>
+        <tr><td><strong>HTTPS / TLS</strong></td><td><span class="s-done">✓ Done</span></td><td>Supabase and Vercel/hosting handle TLS automatically</td></tr>
+        <tr><td><strong>Row-Level Security</strong></td><td><span class="s-done">✓ Done</span></td><td>RLS enabled on all 7 tables. SELECT requires auth; INSERT/UPDATE restricted by role.</td></tr>
+        <tr><td><strong>Input validation / XSS prevention</strong></td><td><span class="s-done">✓ Done</span></td><td>Supabase parameterized queries prevent SQLi. React escapes XSS by default.</td></tr>
+        <tr><td><strong>Service role key security</strong></td><td><span class="s-done">✓ Done</span></td><td>Never exposed client-side, used only in API routes, not prefixed NEXT_PUBLIC_</td></tr>
+        <tr><td><strong>Security headers (CSP, HSTS, etc.)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No <span class="mono">next.config</span> security headers configured (X-Frame-Options, CSP, Referrer-Policy, etc.)</td></tr>
+        <tr><td><strong>2FA enrollment</strong></td><td><span class="s-missing">✗ Missing</span></td><td>Settings UI exists but no TOTP enrollment flow. Supabase MFA API is available.</td></tr>
+        <tr><td><strong>Anomaly detection / suspicious login alerts</strong></td><td><span class="s-later">Later</span></td><td>Not critical at current scale.</td></tr>
+
+        <!-- COMPLIANCE -->
+        <tr class="section-head"><td colspan="3">18. Compliance &amp; Privacy</td></tr>
+        <tr><td><strong>Right to delete / account deletion</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way for a user to delete their own account or request data deletion from the UI.</td></tr>
+        <tr><td><strong>Data export (own data)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No self-service export of a user's personal data (GDPR Article 20).</td></tr>
+        <tr><td><strong>Privacy policy &amp; Terms pages</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No legal pages exist anywhere in the app.</td></tr>
+        <tr><td><strong>Cookie consent</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No cookie banner or consent management. Required for EU users.</td></tr>
+        <tr><td><strong>Audit logs (immutable)</strong></td><td><span class="s-partial">⚠ Partial</span></td><td><span class="mono">client_activities</span> provides partial activity tracking for clients only. No system-wide audit log of user actions (who changed what, when). No admin/security event log.</td></tr>
+        <tr><td><strong>GDPR / HIPAA compliance</strong></td><td><span class="s-later">Later</span></td><td>Clinic apps handling health data need HIPAA. Major undertaking. Not blocking MVP but critical before selling to healthcare customers.</td></tr>
+
+        <!-- OBSERVABILITY -->
+        <tr class="section-head"><td colspan="3">19. Observability &amp; Operations</td></tr>
+        <tr><td><strong>Error tracking (Sentry, etc.)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No error tracking. Runtime exceptions in production are invisible. Sentry can be added in 10 minutes.</td></tr>
+        <tr><td><strong>Application logs</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Next.js dev server logs requests. No structured logging for production (no log aggregation, no alerting).</td></tr>
+        <tr><td><strong>Uptime monitoring</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No external ping/monitoring. App could be down and no one would know.</td></tr>
+
+        <!-- PERFORMANCE -->
+        <tr class="section-head"><td colspan="3">20. Performance &amp; Reliability</td></tr>
+        <tr><td><strong>Server Components for read-heavy pages</strong></td><td><span class="s-done">✓ Done</span></td><td>Dashboard, client detail, reports use Server Components with parallel queries</td></tr>
+        <tr><td><strong>Lazy loading (clients in dialog)</strong></td><td><span class="s-done">✓ Done</span></td><td>Client list only fetched when appointment dialog first opens</td></tr>
+        <tr><td><strong>Caching (Redis / edge)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No caching layer. Every request hits Supabase fresh. Will become a bottleneck at scale.</td></tr>
+        <tr><td><strong>Pagination / virtual scrolling</strong></td><td><span class="s-missing">✗ Missing</span></td><td>All data fetched in one query. 1000 clients would render 1000 DOM rows.</td></tr>
+        <tr><td><strong>Background jobs / scheduling</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No job queue for email sending, reminders, or async operations.</td></tr>
+
+        <!-- I18N -->
+        <tr class="section-head"><td colspan="3">21. Internationalization &amp; Localization</td></tr>
+        <tr><td><strong>Time zone handling</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Timestamps stored as UTC in Supabase. Displayed using browser local time. No user time zone preference or explicit conversion.</td></tr>
+        <tr><td><strong>Multi-language</strong></td><td><span class="s-later">Later</span></td><td>English only. i18next integration needed for multi-language.</td></tr>
+
+        <!-- A11Y -->
+        <tr class="section-head"><td colspan="3">22. Accessibility (a11y)</td></tr>
+        <tr><td><strong>Radix UI primitives</strong></td><td><span class="s-done">✓ Done</span></td><td>Dialogs, dropdowns, selects all use accessible Radix components with keyboard support</td></tr>
+        <tr><td><strong>WCAG 2.1 AA compliance</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No formal accessibility audit. Color contrast, focus management, and screen reader support have not been verified.</td></tr>
+
+        <!-- AUDIT LOGS -->
+        <tr class="section-head"><td colspan="3">23. Audit Logs &amp; Activity Tracking</td></tr>
+        <tr><td><strong>Client activity log</strong></td><td><span class="s-done">✓ Done</span></td><td>client_activities table with type, title, created_by, timestamp</td></tr>
+        <tr><td><strong>System-wide audit log</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No record of who changed an appointment status, who edited a staff member, or who changed a user's role. Essential for compliance and debugging.</td></tr>
+        <tr><td><strong>Security event log</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No log of login events, failed auth attempts, or permission changes.</td></tr>
+
+        <!-- DATA MANAGEMENT -->
+        <tr class="section-head"><td colspan="3">24. Data Management</td></tr>
+        <tr><td><strong>CSV export</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No way to export clients, appointments, or reports to CSV/Excel.</td></tr>
+        <tr><td><strong>CSV import</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No bulk import of existing clients or appointment history. New clinics have to enter data manually one by one.</td></tr>
+        <tr><td><strong>Data warehouse integration</strong></td><td><span class="s-later">Later</span></td><td>Not relevant at current scale.</td></tr>
+
+        <!-- AI -->
+        <tr class="section-head"><td colspan="3">25. AI &amp; Intelligence</td></tr>
+        <tr><td><strong>AI assistant / copilot</strong></td><td><span class="s-later">Later</span></td><td>High potential: "Schedule me a follow-up for all patients seen last month." Claude API integration.</td></tr>
+        <tr><td><strong>Smart scheduling suggestions</strong></td><td><span class="s-later">Later</span></td><td>Suggest optimal appointment slots based on staff availability and client history.</td></tr>
+        <tr><td><strong>Predictive no-show detection</strong></td><td><span class="s-later">Later</span></td><td>Flag appointments likely to be no-shows based on history. High clinical value.</td></tr>
+
+        <!-- PRODUCT ANALYTICS -->
+        <tr class="section-head"><td colspan="3">26. Product Analytics &amp; Growth</td></tr>
+        <tr><td><strong>Event tracking (Mixpanel, PostHog)</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No analytics. No way to know which features are used, where users drop off, or what's broken in production.</td></tr>
+        <tr><td><strong>Session replay (FullStory, Hotjar)</strong></td><td><span class="s-later">Later</span></td><td>Useful but not urgent.</td></tr>
+
+        <!-- DEVOPS -->
+        <tr class="section-head"><td colspan="3">27. DevOps &amp; Engineering</td></tr>
+        <tr><td><strong>Git version control</strong></td><td><span class="s-done">✓ Done</span></td><td>GitHub repo — github.com/CatalinT1/nexus-dashboard</td></tr>
+        <tr><td><strong>CI/CD pipeline</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No automated tests, no build checks on push, no deployment pipeline. Code goes straight from git push to production.</td></tr>
+        <tr><td><strong>Staging environment</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No separate environment to test changes before they hit production users.</td></tr>
+        <tr><td><strong>Database migrations</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>schema.sql exists but changes are applied manually via Supabase Dashboard. No versioned migration system.</td></tr>
+
+        <!-- MARKETING -->
+        <tr class="section-head"><td colspan="3">28. Marketing &amp; Growth Surface</td></tr>
+        <tr><td><strong>Marketing / landing page</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No public-facing website explaining what the product does, pricing, or how to sign up. App starts at /login.</td></tr>
+        <tr><td><strong>Documentation</strong></td><td><span class="s-missing">✗ Missing</span></td><td>No user documentation explaining how to use the dashboard.</td></tr>
+
+        <!-- MOBILE -->
+        <tr class="section-head"><td colspan="3">29. Mobile</td></tr>
+        <tr><td><strong>Mobile web (responsive)</strong></td><td><span class="s-partial">⚠ Partial</span></td><td>Tailwind responsive breakpoints used inconsistently. Sidebar, tables, and calendar views break on small screens.</td></tr>
+        <tr><td><strong>Native iOS / Android apps</strong></td><td><span class="s-later">Later</span></td><td>High value for staff receiving appointment notifications on the go. Not urgent at MVP.</td></tr>
+
+        <!-- ENTERPRISE -->
+        <tr class="section-head"><td colspan="3">30. Enterprise-Tier Differentiators</td></tr>
+        <tr><td><strong>Custom roles &amp; permissions</strong></td><td><span class="s-missing">✗ Missing</span></td><td>3 fixed roles. No custom role creation for enterprise clinics with complex org structures.</td></tr>
+        <tr><td><strong>SSO (SAML / OIDC)</strong></td><td><span class="s-later">Later</span></td><td>Not needed at current stage. Supabase supports it when ready.</td></tr>
+        <tr><td><strong>Dedicated CSM / premium support</strong></td><td><span class="s-later">Later</span></td><td>Business / operational feature, not technical.</td></tr>
+
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Prioritized roadmap -->
+  <section>
+    <h2>🗺️ Recommended Build Order</h2>
+    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1.25rem;">Ordered by what blocks a real product launch vs. what can wait. Features are grouped into four waves.</p>
+
+    <h3 style="margin-bottom:0.75rem;color:#dc2626;">🔴 Wave 1 — Fix Before Going Live</h3>
+    <div class="roadmap" style="margin-bottom:1.5rem;">
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Multi-Tenancy</h3>
+        <p>If this is a product sold to multiple clinics, every clinic's data is currently visible to every other clinic. Add <span class="mono">organization_id</span> to all tables and scope RLS policies to tenant.</p>
+        <ul><li>New <code>organizations</code> table</li><li>organization_id FK on clients, staff, appointments</li><li>RLS updated to filter by org</li></ul>
+        <span class="effort">Effort: Large — architectural change</span>
+      </div>
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Sidebar — Real User + Logout</h3>
+        <p>Sidebar shows hardcoded "Admin User" and its logout button does nothing. Two small fixes that affect every logged-in user every session.</p>
+        <ul><li>Pass user prop from layout.tsx to Sidebar</li><li>Add handleSignOut onClick to sidebar LogOut button</li></ul>
+        <span class="effort">Effort: 30 minutes</span>
+      </div>
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Global Header Search</h3>
+        <p>The search bar is the most visible UI element on every page. Currently non-functional. Must at least search clients by name/email.</p>
+        <ul><li>Add onChange handler with debounce</li><li>Supabase ilike query on clients + appointments</li><li>Results dropdown or navigate to /clients?q=term</li></ul>
+        <span class="effort">Effort: Medium — 2–3 hours</span>
+      </div>
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Client Edit</h3>
+        <p>There is currently no way to edit a client's name, email, phone, address, or status after creation. A core CRM feature that must exist.</p>
+        <ul><li>Add Edit dialog to clients list (like staff edit)</li><li>OR add edit form to client detail page</li><li>supabase.from("clients").update().eq("id")</li></ul>
+        <span class="effort">Effort: Medium — 2–3 hours</span>
+      </div>
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Notifications — Mark as Read</h3>
+        <p>Unread badge never clears. Clicking notifications does nothing. Users will be confused and ignore the bell entirely.</p>
+        <ul><li>onClick on notification row → update is_read in DB</li><li>Decrement unreadCount in local state</li><li>"Mark all as read" button</li></ul>
+        <span class="effort">Effort: Small — 1 hour</span>
+      </div>
+
+      <div class="rm-card p1-border">
+        <div class="p1">CRITICAL</div>
+        <h3>Error Tracking (Sentry)</h3>
+        <p>Production errors are currently invisible. A runtime crash in the appointments page would silently fail with no alert. 10-minute setup.</p>
+        <ul><li>npm install @sentry/nextjs</li><li>DSN in .env, wrap in Sentry config</li><li>Errors auto-captured + alertable</li></ul>
+        <span class="effort">Effort: Very small — 30 minutes</span>
+      </div>
+
+    </div>
+
+    <h3 style="margin-bottom:0.75rem;color:#d97706;">🟡 Wave 2 — Ship Within 2 Weeks</h3>
+    <div class="roadmap" style="margin-bottom:1.5rem;">
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>Email Notifications</h3>
+        <p>Send emails on key events: appointment created, confirmed, cancelled, staff assigned. Use Resend (easiest Supabase integration).</p>
+        <ul><li>npm install resend</li><li>Supabase Edge Function triggered by DB insert</li><li>Templates: confirmation, reminder, cancellation</li></ul>
+        <span class="effort">Effort: Medium-large — 4–6 hours</span>
+      </div>
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>Settings Page — Wire to Supabase</h3>
+        <p>Save Changes currently does nothing. Business name, timezone, notification preferences should persist.</p>
+        <ul><li>Create a settings or workspace table</li><li>Load on page mount, save on button click</li><li>Notification preferences stored in profiles table</li></ul>
+        <span class="effort">Effort: Medium — 3–4 hours</span>
+      </div>
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>Denormalized Count Sync</h3>
+        <p>staff.total_appointments and clients.total_revenue never update. Reports and rankings show stale seed data.</p>
+        <ul><li>DB trigger on appointments INSERT/DELETE</li><li>OR update manually in create/delete handlers</li><li>Affects Reports "top staff" and "top clients"</li></ul>
+        <span class="effort">Effort: Small — Supabase SQL trigger preferred</span>
+      </div>
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>CSV Export</h3>
+        <p>No way to export data. Clinics need client lists, appointment history, and revenue reports in Excel/CSV.</p>
+        <ul><li>Export button on clients list</li><li>Export on appointments page (filtered results)</li><li>Export on reports page</li></ul>
+        <span class="effort">Effort: Small per page — 1–2 hours total</span>
+      </div>
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>"Book Appointment" Pre-fills Client</h3>
+        <p>The button on the client detail page should open the create dialog with that client already selected.</p>
+        <ul><li>Change href to /appointments?new=1&clientId=xxx</li><li>Read clientId from searchParams in appointments page</li><li>Pre-select client in createForm on open</li></ul>
+        <span class="effort">Effort: Very small — 30 minutes</span>
+      </div>
+
+      <div class="rm-card p2-border">
+        <div class="p2">HIGH</div>
+        <h3>Pagination</h3>
+        <p>All lists load everything. A clinic with 500 clients would have an unusable, slow page.</p>
+        <ul><li>Add .range(offset, offset+24) to Supabase queries</li><li>Next / Prev controls or infinite scroll</li><li>Affects clients, appointments, staff</li></ul>
+        <span class="effort">Effort: Medium — 2–3 hours</span>
+      </div>
+
+    </div>
+
+    <h3 style="margin-bottom:0.75rem;color:#2563eb;">🔵 Wave 3 — Build in Month 2</h3>
+    <div class="roadmap" style="margin-bottom:1.5rem;">
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Billing &amp; Subscriptions</h3>
+        <p>If this is a product sold to clinics, billing is required. Stripe + Supabase is the standard pattern.</p>
+        <ul><li>Stripe Customer + Subscription per organization</li><li>Webhook: update plan in DB on payment events</li><li>Billing portal page (Stripe hosted)</li></ul>
+        <span class="effort">Effort: Large — full feature</span>
+      </div>
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Dark Mode</h3>
+        <p>Toggle exists but does nothing. Implement via next-themes + Tailwind dark: variants.</p>
+        <ul><li>npm install next-themes</li><li>Wrap layout in ThemeProvider</li><li>Add dark: prefix to key components</li></ul>
+        <span class="effort">Effort: Medium — 2–4 hours</span>
+      </div>
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Calendar Sync (Google / Outlook)</h3>
+        <p>High value for clinic staff — sync their appointments to their personal calendar automatically.</p>
+        <ul><li>Google Calendar API OAuth integration</li><li>Create event on appointment confirm</li><li>Update/delete on changes</li></ul>
+        <span class="effort">Effort: Large — OAuth + API work</span>
+      </div>
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Appointment Reminders (Scheduled)</h3>
+        <p>24h and 1h before an appointment — send email/SMS reminder to client. Requires a job scheduler.</p>
+        <ul><li>Supabase Edge Function with cron trigger</li><li>Query appointments starting within 24h / 1h</li><li>Send via Resend / Twilio</li></ul>
+        <span class="effort">Effort: Medium — 3–4 hours</span>
+      </div>
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Audit Log (System-wide)</h3>
+        <p>Track who changed what and when — appointment status changes, role changes, client edits.</p>
+        <ul><li>New audit_logs table: user_id, action, entity, before, after, timestamp</li><li>Insert row in each mutation handler</li><li>Admin view page</li></ul>
+        <span class="effort">Effort: Medium — DB + handlers</span>
+      </div>
+
+      <div class="rm-card p3-border">
+        <div class="p3">MEDIUM</div>
+        <h3>Social Login (Google)</h3>
+        <p>Reduce friction for sign-in. Supabase supports Google OAuth with minimal config.</p>
+        <ul><li>Enable Google provider in Supabase dashboard</li><li>Add "Sign in with Google" button on login page</li><li>Handle callback in auth/callback route</li></ul>
+        <span class="effort">Effort: Small — mostly config</span>
+      </div>
+
+    </div>
+
+    <h3 style="margin-bottom:0.75rem;color:#64748b;">⚪ Wave 4 — Later / Growth Phase</h3>
+    <div class="roadmap">
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>AI Scheduling Assistant</h3><p>Natural-language queries: "Book a follow-up for all patients seen in May." Claude API integration.</p><span class="effort">High complexity, high value</span></div>
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>Mobile Apps</h3><p>React Native or Expo for staff to receive and manage appointments on-the-go.</p><span class="effort">Major effort</span></div>
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>SSO (SAML / OIDC)</h3><p>Required for enterprise clinics using Okta, Azure AD, or Google Workspace.</p><span class="effort">Supabase supports natively</span></div>
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>HIPAA Compliance</h3><p>Required to handle health data commercially in the US. BAA with Supabase needed.</p><span class="effort">Operational + legal + technical</span></div>
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>Multi-Language</h3><p>i18next for translated UI. Important for non-English clinic markets.</p><span class="effort">Medium — i18n setup + translation</span></div>
+      <div class="rm-card p4-border"><div class="p4">LATER</div><h3>Document Attachments</h3><p>Attach files to clients or appointments. Supabase Storage backend.</p><span class="effort">Medium — Storage integration</span></div>
+    </div>
+  </section>
+
+  <!-- Quick wins summary -->
+  <section>
+    <h2>⚡ Quick Wins — High Impact, Low Effort</h2>
+    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">These can each be done in under an hour and remove visible, embarrassing gaps.</p>
+    <table class="cat-table">
+      <thead><tr><th>#</th><th>Fix</th><th>File(s) to Change</th><th>Time Est.</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Sidebar real user + working logout</strong></td><td class="mono">layout.tsx → sidebar.tsx</td><td>30 min</td></tr>
+        <tr><td>2</td><td><strong>Notifications mark as read</strong></td><td class="mono">header.tsx</td><td>45 min</td></tr>
+        <tr><td>3</td><td><strong>Sentry error tracking</strong></td><td class="mono">next.config.js + sentry.config.ts</td><td>30 min</td></tr>
+        <tr><td>4</td><td><strong>"Book Appointment" pre-fills client</strong></td><td class="mono">clients/[id]/page.tsx + appointments/page.tsx</td><td>30 min</td></tr>
+        <tr><td>5</td><td><strong>"No-show" status button</strong></td><td class="mono">appointments/page.tsx</td><td>20 min</td></tr>
+        <tr><td>6</td><td><strong>Add Note button (client detail)</strong></td><td class="mono">clients/[id]/page.tsx</td><td>45 min</td></tr>
+        <tr><td>7</td><td><strong>Sidebar badge live counts</strong></td><td class="mono">layout.tsx → sidebar.tsx</td><td>30 min</td></tr>
+        <tr><td>8</td><td><strong>Security headers in next.config</strong></td><td class="mono">next.config.js</td><td>20 min</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Nexus Dashboard · Complete Feature Overview · June 13, 2026 · Based on SaaS Core Features Reference + Days 1–3 Code Audit
+  </footer>
+
+</div>
+</body>
+</html>
