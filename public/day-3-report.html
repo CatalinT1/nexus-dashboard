@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Dashboard — Day 3 Feature Report</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc; color: #1e293b; line-height: 1.6; padding: 2rem 1rem;
+    }
+    .page { max-width: 980px; margin: 0 auto; }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border-radius: 16px; padding: 2.5rem; color: white; margin-bottom: 2rem;
+    }
+    .hero .day-tag {
+      display: inline-block; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 999px;
+      padding: 0.2rem 0.875rem; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .hero p  { margin-top: 0.5rem; opacity: 0.75; font-size: 1.05rem; }
+    .hero .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+    .pill {
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px; padding: 0.25rem 0.875rem; font-size: 0.8rem; font-weight: 500;
+    }
+
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.15rem; font-weight: 700; color: #1e293b;
+      margin-bottom: 1rem; padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* Summary stats */
+    .score-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .score-item {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 1rem 1.25rem; flex: 1; min-width: 130px; text-align: center;
+    }
+    .score-item .val { font-size: 1.75rem; font-weight: 800; line-height: 1; }
+    .score-item .lbl { font-size: 0.72rem; color: #94a3b8; margin-top: 0.3rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .green .val { color: #16a34a; }
+    .amber .val { color: #d97706; }
+    .red   .val { color: #dc2626; }
+
+    /* Category label */
+    .cat-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; padding: 0.1rem 0.6rem; border-radius: 999px;
+      display: inline-block; margin-bottom: 0.35rem;
+    }
+    .cat-working  { background: #dcfce7; color: #166534; }
+    .cat-partial  { background: #fef3c7; color: #92400e; }
+    .cat-broken   { background: #fee2e2; color: #991b1b; }
+    .cat-missing  { background: #f1f5f9; color: #475569; }
+
+    /* Feature table */
+    .feature-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .feature-table th {
+      text-align: left; padding: 0.6rem 1rem; background: #f1f5f9; color: #475569;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .feature-table td { padding: 0.7rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .feature-table tr:last-child td { border-bottom: none; }
+    .feature-table tr:hover td { background: #fafafa; }
+    .mono { font-family: "Cascadia Code", monospace; font-size: 0.77rem; color: #4f46e5; }
+
+    /* Status badges */
+    .s-ok      { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; background: #dcfce7; color: #166534; padding: 0.15rem 0.6rem; border-radius: 999px; }
+    .s-partial { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; background: #fef3c7; color: #92400e; padding: 0.15rem 0.6rem; border-radius: 999px; }
+    .s-broken  { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; background: #fee2e2; color: #991b1b; padding: 0.15rem 0.6rem; border-radius: 999px; }
+    .s-missing { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; background: #f1f5f9; color: #64748b; padding: 0.15rem 0.6rem; border-radius: 999px; }
+
+    /* Issue cards */
+    .issue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .issue-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem; }
+    .issue-card h3 { font-size: 0.88rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; }
+    .issue-card p  { font-size: 0.8rem; color: #64748b; line-height: 1.6; margin-bottom: 0.5rem; }
+    .issue-card .fix { font-size: 0.77rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.35rem 0.6rem; }
+    .issue-card .fix strong { display: block; font-size: 0.7rem; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+
+    /* Priority label */
+    .p-high   { font-size: 0.65rem; font-weight: 700; background: #fee2e2; color: #b91c1c; padding: 0.1rem 0.5rem; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; }
+    .p-medium { font-size: 0.65rem; font-weight: 700; background: #fef3c7; color: #b45309; padding: 0.1rem 0.5rem; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; }
+    .p-low    { font-size: 0.65rem; font-weight: 700; background: #f1f5f9; color: #64748b; padding: 0.1rem 0.5rem; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      font-size: 0.78rem; color: #94a3b8;
+      border-top: 1px solid #e2e8f0; padding-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="day-tag">Day 3 · Report</div>
+    <h1>Feature Audit — What Works &amp; What Doesn't</h1>
+    <p>A complete review of every feature in the Nexus Dashboard — connected, partially working, and not yet wired up.</p>
+    <div class="meta">
+      <span class="pill">June 13, 2026</span>
+      <span class="pill">19 Features Audited</span>
+      <span class="pill">10 Fully Working</span>
+      <span class="pill">9 Issues Found</span>
+    </div>
+  </div>
+
+  <!-- Score summary -->
+  <section>
+    <h2>📊 Overview</h2>
+    <div class="score-bar">
+      <div class="score-item green"><div class="val">10</div><div class="lbl">Fully Working</div></div>
+      <div class="score-item amber"><div class="val">5</div><div class="lbl">Partially Working</div></div>
+      <div class="score-item red"><div class="val">4</div><div class="lbl">Not Connected</div></div>
+    </div>
+  </section>
+
+  <!-- Full feature table -->
+  <section>
+    <h2>📋 Complete Feature Status</h2>
+    <table class="feature-table">
+      <thead>
+        <tr>
+          <th>Feature / Page</th>
+          <th>Status</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Auth</td></tr>
+        <tr>
+          <td><strong>Login</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Supabase signInWithPassword, error display, redirect on success</td>
+        </tr>
+        <tr>
+          <td><strong>Forgot Password</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Sends Supabase reset email with callback to /reset-password</td>
+        </tr>
+        <tr>
+          <td><strong>Reset Password</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>updateUser({ password }), validates length + match</td>
+        </tr>
+        <tr>
+          <td><strong>Sign Out</strong></td>
+          <td><span class="s-partial">⚠ Partial</span></td>
+          <td>Works from the <strong>Header user dropdown only</strong>. The LogOut button in the sidebar footer has no onClick — clicking it does nothing.</td>
+        </tr>
+        <tr>
+          <td><strong>Route Protection</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>proxy.ts intercepts every request, validates JWT server-side</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Dashboard</td></tr>
+        <tr>
+          <td><strong>KPI Cards</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Total clients, appointments today, active staff, revenue — all from live DB</td>
+        </tr>
+        <tr>
+          <td><strong>Revenue &amp; Appointments Charts</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>AreaChart + BarChart from revenue_data table via Recharts</td>
+        </tr>
+        <tr>
+          <td><strong>Recent Activity Feed</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Last 5 rows from client_activities table</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Clients</td></tr>
+        <tr>
+          <td><strong>Client List</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Search, status filter, column sort, live from Supabase</td>
+        </tr>
+        <tr>
+          <td><strong>Create New Client</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Full form at /clients/new — name, email, phone, address, tags, status</td>
+        </tr>
+        <tr>
+          <td><strong>Delete Client</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Confirmation dialog, removes from list on success</td>
+        </tr>
+        <tr>
+          <td><strong>Edit Client</strong></td>
+          <td><span class="s-broken">✗ Missing</span></td>
+          <td>No edit button or form exists. The clients list only has "View Profile" and "Delete" in the row dropdown. Client details cannot be changed from the UI.</td>
+        </tr>
+        <tr>
+          <td><strong>Change Client Status</strong></td>
+          <td><span class="s-broken">✗ Missing</span></td>
+          <td>No way to change a client's status (e.g. prospect → active, active → VIP) from any screen.</td>
+        </tr>
+        <tr>
+          <td><strong>Client Detail — View</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Profile, stats, activity timeline, appointments list — all live from Supabase</td>
+        </tr>
+        <tr>
+          <td><strong>Client Detail — Book Appointment</strong></td>
+          <td><span class="s-partial">⚠ Partial</span></td>
+          <td>"Book Appointment" button links to <code>/appointments</code> but does not pre-fill the client or open the dialog. Should go to <code>/appointments?new=1&amp;clientId=xxx</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Client Detail — Add Note</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>The "Add Note" button on the Notes tab renders but has no handler. Clicking it does nothing. Cannot add activity notes from the UI.</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Appointments</td></tr>
+        <tr>
+          <td><strong>Calendar (month/week/list)</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>All three views, staff + status filters, color-coded events</td>
+        </tr>
+        <tr>
+          <td><strong>Create Appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Full form — client, staff, category, date/time, fee, color, notes, reminders</td>
+        </tr>
+        <tr>
+          <td><strong>Inline new client from appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Added Day 3 — "＋ New client…" in client dropdown, mini-dialog, auto-select</td>
+        </tr>
+        <tr>
+          <td><strong>Edit Appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Pre-populated form, update saved to Supabase, calendar refreshes</td>
+        </tr>
+        <tr>
+          <td><strong>Delete Appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Confirmation dialog, removes from calendar</td>
+        </tr>
+        <tr>
+          <td><strong>Confirm / Cancel appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Status change updates badge in real-time in detail dialog + calendar</td>
+        </tr>
+        <tr>
+          <td><strong>Set "No-show" status</strong></td>
+          <td><span class="s-broken">✗ Missing</span></td>
+          <td>"no-show" is a valid status in the DB enum but there is no button to set it. The detail dialog only has Confirm and Cancel.</td>
+        </tr>
+        <tr>
+          <td><strong>Header "New" → New Appointment</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Fixed Day 3 — opens the create dialog immediately via ?new=1</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Staff</td></tr>
+        <tr>
+          <td><strong>Staff List</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Live from staff table, stats cards</td>
+        </tr>
+        <tr>
+          <td><strong>Add Staff</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Insert dialog with all fields</td>
+        </tr>
+        <tr>
+          <td><strong>Edit Staff</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Edit dialog with schedule/work days/role</td>
+        </tr>
+        <tr>
+          <td><strong>Delete Staff</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>FK constraint error surfaced if staff has appointments</td>
+        </tr>
+        <tr>
+          <td><strong>Activate / Deactivate</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Toggle updates DB and card indicator</td>
+        </tr>
+        <tr>
+          <td><strong>Staff appointment count sync</strong></td>
+          <td><span class="s-partial">⚠ Partial</span></td>
+          <td><code>staff.total_appointments</code> is a denormalized counter. Creating or deleting appointments does not update it — the count stays at whatever value was set when the record was seeded. Reports and staff cards show stale numbers.</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Users</td></tr>
+        <tr>
+          <td><strong>List Profiles</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Stats, table with avatar/name/email/role/status/joined date</td>
+        </tr>
+        <tr>
+          <td><strong>Change Role</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Inline Select, calls PUT /api/admin/update-profile (requires service role key)</td>
+        </tr>
+        <tr>
+          <td><strong>Activate / Deactivate User</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Dropdown toggle, calls same API route</td>
+        </tr>
+        <tr>
+          <td><strong>Invite New User</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Supabase invite email, profile created on acceptance (requires service role key)</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Profile &amp; Settings</td></tr>
+        <tr>
+          <td><strong>Edit Profile (name/phone/dept)</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Updates profiles table via Supabase</td>
+        </tr>
+        <tr>
+          <td><strong>Change Password</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>updateUser({ password }), validates match</td>
+        </tr>
+        <tr>
+          <td><strong>Settings page</strong></td>
+          <td><span class="s-broken">✗ UI only</span></td>
+          <td>All tabs (General, Notifications, Security, Billing) are fully static. Inputs have no Supabase backing. "Save Changes" shows a green flash but writes nothing to the database.</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Reports</td></tr>
+        <tr>
+          <td><strong>Revenue &amp; Appointments charts</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Live from revenue_data table</td>
+        </tr>
+        <tr>
+          <td><strong>Top Clients / Top Staff</strong></td>
+          <td><span class="s-partial">⚠ Partial</span></td>
+          <td>Orders by <code>total_revenue</code> / <code>total_appointments</code> — but those denormalized columns are never updated by the app, so rankings reflect seed data only.</td>
+        </tr>
+        <tr>
+          <td><strong>Export / Download</strong></td>
+          <td><span class="s-missing">— Not built</span></td>
+          <td>No export button exists. Reports are view-only.</td>
+        </tr>
+
+        <tr><td colspan="3" style="background:#f8fafc;padding:0.4rem 1rem;font-size:0.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Global UI</td></tr>
+        <tr>
+          <td><strong>Header Search Bar</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>Shows a search input with placeholder "Search clients, appointments…" but has no onChange handler, no query, no results. Purely decorative.</td>
+        </tr>
+        <tr>
+          <td><strong>Notifications Bell — Display</strong></td>
+          <td><span class="s-ok">✓ Working</span></td>
+          <td>Live from notifications table, unread count badge, relative timestamps</td>
+        </tr>
+        <tr>
+          <td><strong>Notifications — Mark as Read</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>Clicking a notification in the dropdown does not update <code>is_read</code> in the DB. Unread count never decrements.</td>
+        </tr>
+        <tr>
+          <td><strong>"View all notifications" button</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>Button renders at the bottom of the notification dropdown but has no href and no onClick. Clicking it does nothing. There is also no /notifications page.</td>
+        </tr>
+        <tr>
+          <td><strong>Dark Mode Toggle</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>The moon/sun icon in the header toggles a <code>darkMode</code> boolean in state but this state is never applied to any element. No dark theme class is added to the document root.</td>
+        </tr>
+        <tr>
+          <td><strong>Sidebar — Logged-in User</strong></td>
+          <td><span class="s-broken">✗ Hardcoded</span></td>
+          <td>The bottom of the sidebar shows hardcoded "Admin User / admin@nexus.com" with "AW" initials. The dashboard layout fetches the real user but only passes it to the Header, not the Sidebar.</td>
+        </tr>
+        <tr>
+          <td><strong>Sidebar — Sign Out Button</strong></td>
+          <td><span class="s-broken">✗ Not wired</span></td>
+          <td>The LogOut icon button in the sidebar footer has no onClick handler. Only the sign-out in the Header's user dropdown works.</td>
+        </tr>
+        <tr>
+          <td><strong>Sidebar — Badges</strong></td>
+          <td><span class="s-broken">✗ Hardcoded</span></td>
+          <td>"128" (Clients) and "4" (Appointments) are hardcoded strings in the navItems array. Not live counts from the database.</td>
+        </tr>
+        <tr>
+          <td><strong>Help page (/help)</strong></td>
+          <td><span class="s-partial">⚠ Redirect</span></td>
+          <td><code>/help</code> just redirects to <code>/settings</code>. Not a real help page.</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Prioritised issues -->
+  <section>
+    <h2>🔴 Issues by Priority</h2>
+    <div class="issue-grid">
+
+      <div class="issue-card">
+        <div class="p-high">HIGH</div>
+        <h3>Client Edit is Missing</h3>
+        <p>There is no way to edit a client's name, email, phone, address, company, tags, or notes anywhere in the app. The clients list only offers "View Profile" and "Delete". The client detail page is read-only.</p>
+        <div class="fix"><strong>Fix</strong>Add an Edit dialog to the client list (similar to Staff edit) OR an edit form on the client detail page.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-high">HIGH</div>
+        <h3>Header Search Does Nothing</h3>
+        <p>The search bar in the top header is the most prominent UI element on every page, but it has no functionality. Users type in it and nothing happens.</p>
+        <div class="fix"><strong>Fix</strong>Wire it to a search query across clients and appointments — either client-side filtering or a Supabase full-text search (ilike).</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-high">HIGH</div>
+        <h3>Sidebar Shows Hardcoded User</h3>
+        <p>The sidebar footer shows "Admin User / admin@nexus.com" with "AW" initials regardless of who is logged in. The real user profile is already fetched in the layout but only passed to the Header.</p>
+        <div class="fix"><strong>Fix</strong>Pass the <code>user</code> prop from <code>layout.tsx</code> to <code>&lt;Sidebar user=&#123;user&#125; /&gt;</code> and render real name/email/initials.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-high">HIGH</div>
+        <h3>Sidebar Sign Out Doesn't Work</h3>
+        <p>The LogOut button in the sidebar footer has no onClick handler. Users who click it expect to be signed out but nothing happens. This is a confusing UX break.</p>
+        <div class="fix"><strong>Fix</strong>Add <code>onClick=&#123;handleSignOut&#125;</code> to the sidebar's LogOut button, using the same Supabase signOut pattern as the header.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-medium">MEDIUM</div>
+        <h3>Notifications Can't Be Marked as Read</h3>
+        <p>Clicking a notification in the bell dropdown never updates <code>is_read</code> in the database. The unread count badge (red dot) never goes away.</p>
+        <div class="fix"><strong>Fix</strong>Add an onClick to each notification row that calls <code>supabase.from("notifications").update(&#123; is_read: true &#125;).eq("id", notif.id)</code> and updates local state.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-medium">MEDIUM</div>
+        <h3>Client Status Can't Be Changed</h3>
+        <p>Once a client is created, their status (active / VIP / prospect / inactive) cannot be changed from the UI. There is no inline toggle or edit field for status.</p>
+        <div class="fix"><strong>Fix</strong>Add a status Select to the client edit dialog (once edit is built), or add a quick inline status dropdown on the client list row.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-medium">MEDIUM</div>
+        <h3>Denormalized Counts Never Sync</h3>
+        <p><code>staff.total_appointments</code>, <code>clients.total_appointments</code>, and <code>clients.total_revenue</code> are set at seed time and never updated. Staff cards, client profiles, and the Reports "top staff/clients" rankings all show stale data.</p>
+        <div class="fix"><strong>Fix</strong>Either add Supabase DB triggers on the appointments table to auto-update these columns, or update them manually in the create/delete appointment handlers.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-medium">MEDIUM</div>
+        <h3>"Book Appointment" Doesn't Pre-fill Client</h3>
+        <p>The "Book Appointment" button on the client detail page goes to <code>/appointments</code> — not <code>/appointments?new=1&amp;clientId=xxx</code>. The dialog doesn't open and the client isn't pre-selected.</p>
+        <div class="fix"><strong>Fix</strong>Change the href to <code>/appointments?new=1&amp;clientId=&#123;client.id&#125;</code> and read <code>clientId</code> from searchParams in the appointments page to pre-select it in the form.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-low">LOW</div>
+        <h3>Settings Page is UI-Only</h3>
+        <p>All settings (business info, notification preferences, 2FA, billing plan) are fake. "Save Changes" shows a green flash but writes nothing to the database.</p>
+        <div class="fix"><strong>Fix</strong>Create a <code>settings</code> or <code>workspace</code> table in Supabase and wire Save to <code>upsert()</code>. At minimum, notification preferences could be stored in the profiles table.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-low">LOW</div>
+        <h3>Sidebar Badges Are Hardcoded</h3>
+        <p>"128" (Clients) and "4" (Appointments) in the sidebar navigation are static strings — not live counts from the database.</p>
+        <div class="fix"><strong>Fix</strong>Fetch real counts in the dashboard layout and pass them to the Sidebar, or remove the badges and show them only on the respective pages.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-low">LOW</div>
+        <h3>Dark Mode Toggle is Decorative</h3>
+        <p>The moon/sun icon switches but applies no styling. No dark theme is implemented.</p>
+        <div class="fix"><strong>Fix</strong>Use <code>document.documentElement.classList.toggle("dark")</code> and add Tailwind <code>dark:</code> variants, or integrate <code>next-themes</code>.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-low">LOW</div>
+        <h3>"No-show" Status Unreachable</h3>
+        <p>The <code>"no-show"</code> status exists in the DB enum and is rendered on the calendar, but there is no button to set it. The detail dialog only offers Confirm and Cancel.</p>
+        <div class="fix"><strong>Fix</strong>Add a "Mark No-show" button to the appointment detail dialog footer (alongside Confirm/Cancel), visible only when status is scheduled or confirmed.</div>
+      </div>
+
+      <div class="issue-card">
+        <div class="p-low">LOW</div>
+        <h3>"Add Note" Button Has No Handler</h3>
+        <p>On the client detail → Notes tab, "Add Note" renders but clicking it does nothing. Client notes can only be added at creation time via /clients/new.</p>
+        <div class="fix"><strong>Fix</strong>Add a small textarea dialog that inserts a row into <code>client_activities</code> (type: "note") and refreshes the activity timeline.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Not built at all -->
+  <section>
+    <h2>🔲 Features Not Yet Built</h2>
+    <table class="feature-table">
+      <thead>
+        <tr><th>Feature</th><th>Where</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Email notifications on appointment</strong></td>
+          <td>Appointment create</td>
+          <td>Deliberately deferred — would need an email provider (Resend / SendGrid). Send email to staff member when assigned a new appointment.</td>
+        </tr>
+        <tr>
+          <td><strong>Reports — Export (CSV/PDF)</strong></td>
+          <td>/reports</td>
+          <td>No export button exists. Revenue and appointment data visible on-screen only.</td>
+        </tr>
+        <tr>
+          <td><strong>Help &amp; Support page</strong></td>
+          <td>/help</td>
+          <td>Currently just redirects to /settings. A real help page (FAQs, docs, contact) does not exist.</td>
+        </tr>
+        <tr>
+          <td><strong>Notifications page</strong></td>
+          <td>"View all" button</td>
+          <td>The bell dropdown has a "View all notifications" button but there is no /notifications route. The button is a dead end.</td>
+        </tr>
+        <tr>
+          <td><strong>Avatar / profile photo upload</strong></td>
+          <td>/profile</td>
+          <td>Camera icon is shown on the profile page but there is no file upload connected to Supabase Storage.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Nexus Dashboard · Day 3 Feature Report · June 13, 2026
+  </footer>
+</div>
+</body>
+</html>

@@ -84,7 +84,7 @@ export function Header({ user }: { user: HeaderUser }) {
               <Link href="/clients/new">New Client</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/appointments">New Appointment</Link>
+              <Link href="/appointments?new=1">New Appointment</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

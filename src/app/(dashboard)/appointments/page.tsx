@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Plus, Clock, User, MapPin,
   Filter, CheckCircle2, XCircle, AlertCircle, Calendar,
@@ -9,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
@@ -88,13 +89,14 @@ function getAppointmentsForDate(appointments: Appointment[], date: Date) {
 }
 
 function AptFormFields({
-  form, setForm, clientOptions, staffList, clientsLoading,
+  form, setForm, clientOptions, staffList, clientsLoading, onRequestNewClient,
 }: {
   form: AptForm;
   setForm: React.Dispatch<React.SetStateAction<AptForm>>;
   clientOptions: ClientOption[];
   staffList: Staff[];
   clientsLoading: boolean;
+  onRequestNewClient: () => void;
 }) {
   const activeStaff = staffList.filter((s) => s.isActive);
   return (
@@ -138,7 +140,13 @@ function AptFormFields({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label>Client</Label>
-            <Select value={form.clientId} onValueChange={(v) => setForm((p) => ({ ...p, clientId: v }))}>
+            <Select
+              value={form.clientId}
+              onValueChange={(v) => {
+                if (v === "__new__") { onRequestNewClient(); return; }
+                setForm((p) => ({ ...p, clientId: v }));
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder={clientsLoading ? "Loading..." : "Select client"} />
               </SelectTrigger>
@@ -146,6 +154,12 @@ function AptFormFields({
                 {clientOptions.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
+                <SelectSeparator />
+                <SelectItem value="__new__" className="text-indigo-600 font-medium focus:text-indigo-700 focus:bg-indigo-50">
+                  <span className="flex items-center gap-1.5">
+                    <Plus className="h-3.5 w-3.5" />New client…
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -215,6 +229,9 @@ function AptFormFields({
 
 export default function AppointmentsPage() {
   const today = new Date();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const autoOpenedRef = useRef(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,6 +268,12 @@ export default function AppointmentsPage() {
   // Edit target ID (set before opening edit dialog, after closing detail dialog)
   const [editTargetId, setEditTargetId] = useState<string | null>(null);
 
+  // New client (inline creation from appointment dialog)
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClientForm, setNewClientForm] = useState({ name: "", email: "", phone: "" });
+  const [newClientSaving, setNewClientSaving] = useState(false);
+  const [newClientError, setNewClientError] = useState("");
+
   useEffect(() => {
     const supabase = createClient();
     Promise.all([
@@ -262,6 +285,15 @@ export default function AppointmentsPage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1" && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      openCreateDialog();
+      router.replace("/appointments");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const loadClients = async () => {
     if (clientsLoaded) return;
@@ -297,6 +329,33 @@ export default function AppointmentsPage() {
     setShowEdit(true);
     setSelectedApt(null);
     await loadClients();
+  };
+
+  const handleCreateNewClient = async () => {
+    if (!newClientForm.name || !newClientForm.email) {
+      setNewClientError("Name and email are required.");
+      return;
+    }
+    setNewClientSaving(true);
+    setNewClientError("");
+    const supabase = createClient();
+    const { data, error: err } = await supabase
+      .from("clients")
+      .insert({
+        name: newClientForm.name, email: newClientForm.email,
+        phone: newClientForm.phone || null,
+        status: "active", tags: [], total_appointments: 0, total_revenue: 0,
+      })
+      .select("id, name, email")
+      .single();
+    setNewClientSaving(false);
+    if (err) { setNewClientError(err.message); return; }
+    const newClient: ClientOption = { id: data.id, name: data.name, email: data.email };
+    setClientOptions((prev) => [...prev, newClient].sort((a, b) => a.name.localeCompare(b.name)));
+    if (showCreate) setCreateForm((p) => ({ ...p, clientId: newClient.id }));
+    if (showEdit)   setEditForm((p)   => ({ ...p, clientId: newClient.id }));
+    setShowNewClient(false);
+    setNewClientForm({ name: "", email: "", phone: "" });
   };
 
   const buildTimestamps = (date: string, start: string, end: string) => ({
@@ -761,6 +820,7 @@ export default function AppointmentsPage() {
             form={createForm} setForm={setCreateForm}
             clientOptions={clientOptions} staffList={staffList}
             clientsLoading={clientsLoading}
+            onRequestNewClient={() => { setNewClientError(""); setShowNewClient(true); }}
           />
           {createError && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>}
           <DialogFooter>
@@ -781,6 +841,7 @@ export default function AppointmentsPage() {
             form={editForm} setForm={setEditForm}
             clientOptions={clientOptions} staffList={staffList}
             clientsLoading={clientsLoading}
+            onRequestNewClient={() => { setNewClientError(""); setShowNewClient(true); }}
           />
           {editError && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{editError}</p>}
           <DialogFooter>
@@ -803,6 +864,54 @@ export default function AppointmentsPage() {
             <Button variant="outline" onClick={() => setShowDeleteApt(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDeleteApt} loading={aptDeleting}>
               {!aptDeleting && "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Client Dialog (inline creation from appointment form) */}
+      <Dialog open={showNewClient} onOpenChange={setShowNewClient}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create New Client</DialogTitle>
+            <DialogDescription>
+              The client will be saved and automatically selected in your appointment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Full Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Jane Smith"
+                value={newClientForm.name}
+                onChange={(e) => setNewClientForm((p) => ({ ...p, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Email <span className="text-red-500">*</span></Label>
+              <Input
+                type="email"
+                placeholder="jane@example.com"
+                value={newClientForm.email}
+                onChange={(e) => setNewClientForm((p) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone <span className="text-slate-400 font-normal">(optional)</span></Label>
+              <Input
+                placeholder="+1 (555) 000-0000"
+                value={newClientForm.phone}
+                onChange={(e) => setNewClientForm((p) => ({ ...p, phone: e.target.value }))}
+              />
+            </div>
+            {newClientError && (
+              <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{newClientError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewClient(false)}>Cancel</Button>
+            <Button onClick={handleCreateNewClient} loading={newClientSaving}>
+              {!newClientSaving && "Create & Select"}
             </Button>
           </DialogFooter>
         </DialogContent>
