@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Dashboard — Day 4 Summary</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc; color: #1e293b; line-height: 1.6; padding: 2rem 1rem;
+    }
+    .page { max-width: 960px; margin: 0 auto; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+      border-radius: 16px; padding: 2.5rem; color: white; margin-bottom: 2rem;
+    }
+    .hero .day-tag {
+      display: inline-block; background: rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.4); border-radius: 999px;
+      padding: 0.2rem 0.875rem; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .hero p  { margin-top: 0.5rem; opacity: 0.9; font-size: 1.05rem; }
+    .hero .meta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+    .pill {
+      background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 999px; padding: 0.25rem 0.875rem; font-size: 0.8rem; font-weight: 500;
+    }
+
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.15rem; font-weight: 700; color: #1e293b;
+      margin-bottom: 1rem; padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* Stats */
+    .stat-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-item {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.875rem 1.25rem; flex: 1; min-width: 100px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .stat-item .val { font-size: 1.6rem; font-weight: 800; color: #4f46e5; line-height: 1; }
+    .stat-item .lbl { font-size: 0.72rem; color: #94a3b8; margin-top: 0.25rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Feature cards */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .feat-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1.125rem; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .feat-card .icon {
+      width: 2rem; height: 2rem; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem;
+    }
+    .feat-card h3 { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+    .feat-card p  { font-size: 0.79rem; color: #64748b; line-height: 1.55; }
+    .feat-card .files { font-family: monospace; font-size: 0.7rem; color: #818cf8; margin-top: 0.25rem; }
+
+    .icon-blue   { background: #eff6ff; }
+    .icon-violet { background: #f5f3ff; }
+    .icon-green  { background: #f0fdf4; }
+    .icon-amber  { background: #fffbeb; }
+    .icon-rose   { background: #fff1f2; }
+    .icon-cyan   { background: #ecfeff; }
+    .icon-slate  { background: #f8fafc; }
+    .icon-indigo { background: #eef2ff; }
+
+    /* Comparison table */
+    .comp-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .comp-table th {
+      background: #f8fafc; font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;
+      padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;
+    }
+    .comp-table td {
+      padding: 0.75rem 1rem; font-size: 0.82rem; color: #475569;
+      border-bottom: 1px solid #f1f5f9; vertical-align: top;
+    }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table td:first-child { font-weight: 600; color: #1e293b; }
+    .comp-table td:nth-child(2) { min-width: 90px; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      border-radius: 999px; padding: 0.2rem 0.6rem;
+      font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+    }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-amber  { background: #fef3c7; color: #92400e; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-blue   { background: #dbeafe; color: #1e40af; }
+    .badge-violet { background: #ede9fe; color: #6d28d9; }
+
+    /* Code boxes */
+    .code-box {
+      background: #0f172a; border-radius: 10px; padding: 1rem 1.25rem;
+      font-family: "Cascadia Code","Fira Code",monospace; font-size: 0.76rem;
+      color: #94a3b8; overflow-x: auto; margin-top: 0.75rem; line-height: 1.7;
+    }
+    .code-box .kw  { color: #7dd3fc; }
+    .code-box .str { color: #86efac; }
+    .code-box .cm  { color: #475569; font-style: italic; }
+    .code-box .fn  { color: #fbbf24; }
+
+    /* Observation cards */
+    .obs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .obs-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 1rem; font-size: 0.82rem; color: #475569;
+    }
+    .obs-card .obs-head {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 700; color: #1e293b; font-size: 0.85rem; margin-bottom: 0.5rem;
+    }
+    .obs-card ul { list-style: none; }
+    .obs-card ul li {
+      padding: 0.2rem 0 0.2rem 1rem; position: relative; color: #64748b;
+    }
+    .obs-card ul li::before { content: "→"; position: absolute; left: 0; color: #6366f1; font-weight: 700; }
+
+    /* Fix card */
+    .fix-card {
+      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+      padding: 1rem 1.25rem; margin-bottom: 0.75rem;
+    }
+    .fix-card .fix-title { font-weight: 700; font-size: 0.85rem; color: #9a3412; margin-bottom: 0.25rem; }
+    .fix-card p { font-size: 0.8rem; color: #7c2d12; line-height: 1.6; }
+
+    /* Schema section */
+    .schema-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .schema-table th {
+      background: #f8fafc; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;
+      padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;
+    }
+    .schema-table td {
+      padding: 0.6rem 1rem; font-size: 0.79rem; color: #475569;
+      border-bottom: 1px solid #f1f5f9; font-family: monospace;
+    }
+    .schema-table tr:last-child td { border-bottom: none; }
+
+    /* Info/success boxes */
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+      padding: 1rem 1.25rem; font-size: 0.875rem; color: #1e40af;
+    }
+    .success-box {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      padding: 1rem 1.25rem; font-size: 0.875rem; color: #166534;
+    }
+    .warn-box {
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+      padding: 1rem 1.25rem; font-size: 0.875rem; color: #92400e;
+    }
+
+    footer {
+      text-align: center; margin-top: 3rem;
+      font-size: 0.78rem; color: #94a3b8;
+      border-top: 1px solid #e2e8f0; padding-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="day-tag">Day 4</div>
+    <h1>SaaS Feature Sprint — 9 Features in One Day</h1>
+    <p>Multi-tenancy architecture, real user identity, global search, notifications, CSV exports, dark mode, settings persistence, and more.</p>
+    <div class="meta">
+      <span class="pill">June 15, 2026</span>
+      <span class="pill">9 Feature Areas</span>
+      <span class="pill">14 Files Changed</span>
+      <span class="pill">+900 / −262 Lines</span>
+      <span class="pill">0 TS Errors</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <section>
+    <h2>⚡ At a Glance</h2>
+    <div class="stat-bar">
+      <div class="stat-item"><div class="val">9</div><div class="lbl">Features</div></div>
+      <div class="stat-item"><div class="val">14</div><div class="lbl">Files changed</div></div>
+      <div class="stat-item"><div class="val">4</div><div class="lbl">New files</div></div>
+      <div class="stat-item"><div class="val">1</div><div class="lbl">DB migration</div></div>
+      <div class="stat-item"><div class="val">7</div><div class="lbl">Tables updated</div></div>
+      <div class="stat-item"><div class="val">0</div><div class="lbl">TS errors</div></div>
+    </div>
+    <div class="success-box">
+      <strong>Build status:</strong> <code>npx tsc --noEmit</code> returned no output (clean). All 14 changed files compile without errors. Dev server at <code>http://localhost:3000</code>.
+    </div>
+  </section>
+
+  <!-- FEATURES BUILT -->
+  <section>
+    <h2>🔨 What Was Built</h2>
+    <div class="feature-grid">
+
+      <div class="feat-card">
+        <div class="icon icon-violet">🏢</div>
+        <h3>Multi-Tenancy Architecture</h3>
+        <p>Created <code>organizations</code> table. Added <code>organization_id</code> FK to 7 tables. Backfilled existing data. Rewrote all RLS policies to be org-scoped. Added <code>org_settings</code> table.</p>
+        <div class="files">get-org-id.ts · Supabase migration</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-blue">👤</div>
+        <h3>Real User in Sidebar</h3>
+        <p>Sidebar now shows the authenticated user's real name, email, and initials avatar. Removed hardcoded "Admin User" / "AW" placeholder. Initials derived from actual display name.</p>
+        <div class="files">sidebar.tsx · (dashboard)/layout.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-rose">🚪</div>
+        <h3>Working Logout</h3>
+        <p>Logout button in sidebar (and user menu in header) now calls <code>supabase.auth.signOut()</code> and redirects to <code>/login</code>. Previously the button was decorative.</p>
+        <div class="files">sidebar.tsx · header.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-cyan">🔍</div>
+        <h3>Global Header Search</h3>
+        <p>Debounced 300ms search across clients (by name) and appointments (by title). Results appear in a dropdown below the search box. Escape or click-outside dismisses it. Navigates to client profile on click.</p>
+        <div class="files">header.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-amber">🔔</div>
+        <h3>Notifications Mark as Read</h3>
+        <p>Clicking a notification in the bell dropdown marks it read instantly (optimistic) then persists to Supabase. "Mark all read" button batch-updates all unread. Badge count decrements live.</p>
+        <div class="files">header.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-indigo">📄</div>
+        <h3>Full Notifications Page</h3>
+        <p>New <code>/notifications</code> route with paginated list (20/page), per-type color icons, mark-read on click, "Mark all read" button, "Load more" pagination, and unread count in subtitle.</p>
+        <div class="files">(dashboard)/notifications/page.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-green">✏️</div>
+        <h3>Client Edit Dialog</h3>
+        <p>Row dropdown in Clients page now has an "Edit" option. Opens a dialog to edit Full Name, Email, Phone, Company, Status, and Notes. Saves to Supabase and updates the table in-place without reload.</p>
+        <div class="files">(dashboard)/clients/page.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-blue">📥</div>
+        <h3>CSV Export</h3>
+        <p>One-click CSV download on Clients page, Appointments page, and Reports page. Client-side Blob generation — no server round-trip. Properly escapes quotes in field values.</p>
+        <div class="files">export-csv.ts · clients · appointments · reports</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-slate">⚙️</div>
+        <h3>Settings Persistence</h3>
+        <p>Settings page loads saved business info from <code>org_settings</code> and notification prefs + timezone from <code>profiles</code> on mount. Save button upserts both tables in parallel. Shows saving spinner and "Saved!" confirmation.</p>
+        <div class="files">(dashboard)/settings/page.tsx</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="icon icon-violet">🌙</div>
+        <h3>Dark Mode</h3>
+        <p>Wrapped entire app in <code>ThemeProvider</code> (next-themes). Moon/Sun toggle in header switches theme. CSS variables already defined in <code>globals.css</code> under <code>.dark</code> class — toggle applies them instantly.</p>
+        <div class="files">theme-provider.tsx · layout.tsx · header.tsx</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section>
+    <h2>📊 Feature Status Comparison</h2>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Status</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 100% Working -->
+        <tr>
+          <td>Multi-tenancy schema</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Organizations table, FK columns on 7 tables, NOT NULL enforced, data backfilled, RLS policies org-scoped.</td>
+        </tr>
+        <tr>
+          <td>Sidebar real user</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Name, email, and initials avatar read from authenticated session. No more hardcoded values.</td>
+        </tr>
+        <tr>
+          <td>Sidebar logout</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Calls <code>supabase.auth.signOut()</code> then pushes to <code>/login</code>.</td>
+        </tr>
+        <tr>
+          <td>Header logout (user menu)</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Same handler as sidebar — both sign out cleanly.</td>
+        </tr>
+        <tr>
+          <td>Global search — clients</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Debounced ilike query, shows name + email, click navigates to <code>/clients/[id]</code>.</td>
+        </tr>
+        <tr>
+          <td>Global search — dismiss</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Closes on Escape key, click outside, or selecting a result.</td>
+        </tr>
+        <tr>
+          <td>Notifications mark as read (bell)</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Optimistic UI update + Supabase persist. Badge count decrements immediately.</td>
+        </tr>
+        <tr>
+          <td>Mark all notifications read</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Batch Supabase <code>.in("id", unread)</code> update with optimistic state update.</td>
+        </tr>
+        <tr>
+          <td>"View all notifications" link</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Changed from dead button to <code>&lt;Link href="/notifications"&gt;</code>.</td>
+        </tr>
+        <tr>
+          <td>Notifications full page</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Paginated (20/page), per-type icons with color, mark read, load more, unread count subtitle.</td>
+        </tr>
+        <tr>
+          <td>Client edit dialog</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>All fields editable. Status dropdown included. Supabase update, in-place table refresh.</td>
+        </tr>
+        <tr>
+          <td>CSV export — clients</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Downloads <code>clients.csv</code> with Name, Email, Phone, Status, Revenue columns.</td>
+        </tr>
+        <tr>
+          <td>CSV export — appointments</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Downloads <code>appointments.csv</code> from filtered appointment list.</td>
+        </tr>
+        <tr>
+          <td>CSV export — reports</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Downloads <code>revenue-report.csv</code> from revenue chart data.</td>
+        </tr>
+        <tr>
+          <td>Settings load from DB</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Fetches <code>org_settings</code> + <code>profiles</code> on mount. Fields are controlled inputs, not defaultValue.</td>
+        </tr>
+        <tr>
+          <td>Settings save to DB</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Upserts org_settings + updates profiles in parallel. Shows spinner + "Saved!" toast.</td>
+        </tr>
+        <tr>
+          <td>Dark mode toggle (header)</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td><code>useTheme().setTheme()</code> from next-themes. Persists across navigation via localStorage.</td>
+        </tr>
+        <tr>
+          <td>ThemeProvider wrapping app</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Root <code>layout.tsx</code> wraps children with <code>ThemeProvider</code> (attribute="class").</td>
+        </tr>
+        <tr>
+          <td>Organization_id on INSERTs</td>
+          <td><span class="badge badge-green">✅ 100%</span></td>
+          <td>Fixed Day 4 post-commit: clients/new, appointments create, inline client create, and staff create all include <code>organization_id</code> via <code>getOrgId()</code>.</td>
+        </tr>
+
+        <!-- Needs Attention -->
+        <tr>
+          <td>Global search — appointments</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>Appointment results shown in dropdown, but clicking navigates to <code>/appointments</code> page without pre-filtering by the searched title.</td>
+        </tr>
+        <tr>
+          <td>Dark mode — Header</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>Header <code>bg-white</code> has no <code>dark:</code> variant. Header stays white when dark mode is active. Main page content darkens correctly.</td>
+        </tr>
+        <tr>
+          <td>Dark mode — Settings switch</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>The "Dark Mode" toggle in Settings &gt; Appearance is a bare <code>&lt;Switch /&gt;</code> not wired to <code>useTheme()</code>. It doesn't control the theme.</td>
+        </tr>
+        <tr>
+          <td>Sidebar badge counts</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>Hardcoded "128" (clients) and "4" (appointments) badges were removed. No real counts fetched to replace them. Nav items show no count now.</td>
+        </tr>
+        <tr>
+          <td>Settings — Security tab</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>Password change fields are rendered but not wired to <code>supabase.auth.updateUser()</code>. Clicking "Update Password" does nothing.</td>
+        </tr>
+        <tr>
+          <td>Settings — Appearance extras</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>"Compact Sidebar" and "Language" selectors are UI-only. Not persisted or applied anywhere.</td>
+        </tr>
+        <tr>
+          <td>Settings — Billing tab</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td>Static hardcoded UI (Professional plan, $99/mo). No Stripe integration — deferred by design.</td>
+        </tr>
+        <tr>
+          <td>Multi-tenancy INSERT (staff activities)</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span></td>
+          <td><code>client_activities</code> INSERT (if any) not audited. Activity rows may not include <code>organization_id</code> if created by trigger or server-side code.</td>
+        </tr>
+
+        <!-- Not connected / future -->
+        <tr>
+          <td>Email notifications</td>
+          <td><span class="badge badge-red">❌ Deferred</span></td>
+          <td>Explicitly deferred. Settings UI for email prefs is saved but no sending infrastructure (Resend, SendGrid) is wired.</td>
+        </tr>
+        <tr>
+          <td>Organization switching</td>
+          <td><span class="badge badge-red">❌ Not built</span></td>
+          <td>Schema supports multiple orgs but no UI to create, join, or switch between organizations.</td>
+        </tr>
+        <tr>
+          <td>Invitation system</td>
+          <td><span class="badge badge-red">❌ Not built</span></td>
+          <td>No way to invite users to an organization. All users land in Default Clinic.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- CRITICAL BUG FIX -->
+  <section>
+    <h2>🔴 Post-Commit Bug Fix (Applied Today)</h2>
+
+    <div class="fix-card">
+      <div class="fix-title">INSERT missing <code>organization_id</code> — would have broken all record creation</div>
+      <p>
+        The multi-tenancy migration added <code>organization_id NOT NULL</code> to clients, staff, and appointments tables,
+        and RLS <code>WITH CHECK</code> policies enforce the org match on INSERT. However, the Day 4 commit did not update
+        the INSERT payloads in the app — any attempt to create a new client, appointment, or staff member would have failed
+        with a NOT NULL / RLS violation error.
+      </p>
+    </div>
+
+    <p style="font-size:0.83rem; color:#475569; margin-bottom:0.75rem;">
+      Fixed by adding <code>getOrgId()</code> calls before each INSERT in four files:
+    </p>
+
+    <div class="code-box">
+<span class="cm">// Before (all three INSERT sites — would throw)</span>
+<span class="kw">const</span> { error } = <span class="kw">await</span> supabase.<span class="fn">from</span>(<span class="str">"clients"</span>).<span class="fn">insert</span>({ name, email, ... });
+
+<span class="cm">// After (applied to clients/new, appointments create, inline client create, staff create)</span>
+<span class="kw">const</span> orgId = <span class="kw">await</span> <span class="fn">getOrgId</span>().<span class="fn">catch</span>(() => <span class="kw">null</span>);
+<span class="kw">if</span> (!orgId) { setError(<span class="str">"Could not determine organization."</span>); <span class="kw">return</span>; }
+<span class="kw">const</span> { error } = <span class="kw">await</span> supabase.<span class="fn">from</span>(<span class="str">"clients"</span>).<span class="fn">insert</span>({ name, email, ..., organization_id: orgId });
+    </div>
+
+    <div style="margin-top:1rem;" class="success-box">
+      <strong>Verified clean:</strong> <code>npx tsc --noEmit</code> returned no errors after all four INSERT fixes were applied.
+    </div>
+  </section>
+
+  <!-- DATABASE SCHEMA CHANGES -->
+  <section>
+    <h2>🗄️ Database Schema — What Was Added</h2>
+    <table class="schema-table">
+      <thead>
+        <tr><th>Table / Change</th><th>Details</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>organizations (NEW)</td>
+          <td>id uuid PK, name text, created_at · Seeded with Default Clinic (fixed UUID)</td>
+        </tr>
+        <tr>
+          <td>clients.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>staff.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>appointments.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>notifications.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>client_activities.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>revenue_data.organization_id</td>
+          <td>uuid FK → organizations ON DELETE CASCADE · NOT NULL · backfilled</td>
+        </tr>
+        <tr>
+          <td>profiles.organization_id</td>
+          <td>uuid FK → organizations ON DELETE SET NULL · nullable · backfilled</td>
+        </tr>
+        <tr>
+          <td>profiles.notification_prefs</td>
+          <td>jsonb DEFAULT {"appointments":true,"reminders":true,"payments":true}</td>
+        </tr>
+        <tr>
+          <td>profiles.timezone</td>
+          <td>text DEFAULT 'UTC'</td>
+        </tr>
+        <tr>
+          <td>org_settings (NEW)</td>
+          <td>id uuid PK, organization_id UNIQUE NOT NULL, business_name, email, phone, website, description, updated_at</td>
+        </tr>
+        <tr>
+          <td>RLS policies (all tables)</td>
+          <td>Dropped old simple-auth policies. New policies check organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid())</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- UX OBSERVATIONS -->
+  <section>
+    <h2>👁️ UX Observations (Code Review)</h2>
+    <p style="font-size:0.82rem; color:#64748b; margin-bottom:1rem;">
+      Playwright browser automation was unavailable in this environment (package not locally installed).
+      The following observations are derived from thorough code inspection of all changed files.
+    </p>
+    <div class="obs-grid">
+
+      <div class="obs-card">
+        <div class="obs-head">✅ What users will see working</div>
+        <ul>
+          <li>Real name + email in sidebar (no more "Admin User")</li>
+          <li>Logout clears session and lands on login page</li>
+          <li>Search shows live results below the input as you type</li>
+          <li>Bell badge count decrements when notifications clicked</li>
+          <li>Client row menu has Edit option (new!)</li>
+          <li>Export CSV buttons download real data files</li>
+          <li>Settings fields load from DB and changes persist on Save</li>
+          <li>/notifications is a full page, not just a dropdown</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">⚠️ Things users may notice</div>
+        <ul>
+          <li>Header stays white when switching to dark mode</li>
+          <li>Dark Mode toggle in Settings does nothing (unlinked)</li>
+          <li>Searching for an appointment navigates to the page but doesn't filter</li>
+          <li>Password change fields in Settings are decorative</li>
+          <li>Sidebar nav items no longer show client / appointment counts</li>
+          <li>Billing tab shows static plan info (no live data)</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">🔒 Security posture</div>
+        <ul>
+          <li>All SELECT queries are org-scoped at DB level (RLS)</li>
+          <li>INSERT/UPDATE/DELETE also require matching org_id via RLS</li>
+          <li>No service role key exposed client-side</li>
+          <li>getOrgId() cached in memory only — cleared on page reload</li>
+          <li>No sensitive data in localStorage (only theme preference)</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">📱 Responsive design</div>
+        <ul>
+          <li>Search bar max-width 28rem — shrinks gracefully on mobile</li>
+          <li>Header user name/role hidden below sm breakpoint</li>
+          <li>Settings grid collapses to single column on mobile</li>
+          <li>Notifications page max-width 2xl — works on all screens</li>
+          <li>Edit dialog max-w-lg with scrollable content area</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FILES CHANGED -->
+  <section>
+    <h2>📁 Files Changed</h2>
+    <table class="comp-table">
+      <thead>
+        <tr><th>File</th><th>Type</th><th>Features</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>src/lib/supabase/get-org-id.ts</code></td>
+          <td><span class="badge badge-violet">NEW</span></td>
+          <td>Shared helper — fetches + caches current user's organization_id</td>
+        </tr>
+        <tr>
+          <td><code>src/lib/export-csv.ts</code></td>
+          <td><span class="badge badge-violet">NEW</span></td>
+          <td>Client-side CSV generation via Blob + URL.createObjectURL</td>
+        </tr>
+        <tr>
+          <td><code>src/components/theme-provider.tsx</code></td>
+          <td><span class="badge badge-violet">NEW</span></td>
+          <td>next-themes ThemeProvider wrapper component</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/notifications/page.tsx</code></td>
+          <td><span class="badge badge-violet">NEW</span></td>
+          <td>Full notifications page with pagination and mark-read</td>
+        </tr>
+        <tr>
+          <td><code>src/app/layout.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Added ThemeProvider wrapper; bg-background body class</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/layout.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Passes user object to Sidebar component</td>
+        </tr>
+        <tr>
+          <td><code>src/components/layout/sidebar.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Real user display, working logout, removed hardcoded badges</td>
+        </tr>
+        <tr>
+          <td><code>src/components/layout/header.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Search, mark-read, dark mode toggle, /notifications link</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/clients/page.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Edit dialog, CSV export button</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/clients/new/page.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Added organization_id to INSERT (bug fix)</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/appointments/page.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>CSV export, organization_id on appointment + inline client INSERTs</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/staff/page.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Added organization_id to staff INSERT (bug fix)</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/settings/page.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>Full DB persistence (load + save), controlled inputs, save spinner</td>
+        </tr>
+        <tr>
+          <td><code>src/app/(dashboard)/reports/report-charts.tsx</code></td>
+          <td><span class="badge badge-blue">MODIFIED</span></td>
+          <td>CSV export button wired to revenue data</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- NEXT PRIORITIES -->
+  <section>
+    <h2>🗺️ What's Left — Suggested Next Steps</h2>
+    <div class="obs-grid">
+
+      <div class="obs-card">
+        <div class="obs-head">🔧 Quick fixes (1–2 hours)</div>
+        <ul>
+          <li>Wire dark mode switch in Settings to <code>useTheme()</code></li>
+          <li>Add <code>dark:</code> variants to header.tsx (<code>bg-white</code> → <code>dark:bg-slate-900</code>)</li>
+          <li>Wire Settings password change to <code>supabase.auth.updateUser()</code></li>
+          <li>Appointment search click: pass query as URL param to filter the list</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">📊 Medium features (half day each)</div>
+        <ul>
+          <li>Real sidebar badge counts (live SELECT COUNT per entity)</li>
+          <li>Client profile page — view full history, notes, appointments</li>
+          <li>Appointment calendar view improvements</li>
+          <li>Staff schedule editing (work_days, start/end times)</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">🏗️ Architecture (1–2 days)</div>
+        <ul>
+          <li>Organization invitations (invite by email → Supabase Auth invite)</li>
+          <li>Organization create / switch flow</li>
+          <li>Email notifications via Resend or SendGrid</li>
+          <li>Stripe billing integration (plans, usage limits, metering)</li>
+        </ul>
+      </div>
+
+      <div class="obs-card">
+        <div class="obs-head">🧪 Quality (ongoing)</div>
+        <ul>
+          <li>Playwright E2E tests for the full auth + CRUD flows</li>
+          <li>Error boundary components for graceful runtime failures</li>
+          <li>Loading skeleton states (currently spinner-only)</li>
+          <li>Supabase Realtime for live notification badge updates</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- OVERVIEW COMPARISON -->
+  <section>
+    <h2>📈 Progress vs Overview.html Audit</h2>
+    <div class="warn-box" style="margin-bottom:1rem;">
+      The <code>overview.html</code> audit scored Nexus at ~35% SaaS completeness across 30 categories. Day 4 targeted the highest-impact quick-wins identified there.
+    </div>
+    <table class="comp-table">
+      <thead>
+        <tr><th>Overview Category</th><th>Before Day 4</th><th>After Day 4</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Authentication / Identity</td>
+          <td><span class="badge badge-amber">⚠️ Partial</span> — logout broken</td>
+          <td><span class="badge badge-green">✅ Working</span> — logout + real user</td>
+        </tr>
+        <tr>
+          <td>Multi-tenancy</td>
+          <td><span class="badge badge-red">❌ Missing</span></td>
+          <td><span class="badge badge-green">✅ Schema + RLS</span></td>
+        </tr>
+        <tr>
+          <td>Search / Discovery</td>
+          <td><span class="badge badge-red">❌ Static</span></td>
+          <td><span class="badge badge-green">✅ Live search</span></td>
+        </tr>
+        <tr>
+          <td>Notifications</td>
+          <td><span class="badge badge-amber">⚠️ Read-only</span></td>
+          <td><span class="badge badge-green">✅ Mark read + full page</span></td>
+        </tr>
+        <tr>
+          <td>Data Export</td>
+          <td><span class="badge badge-red">❌ Missing</span></td>
+          <td><span class="badge badge-green">✅ CSV on 3 pages</span></td>
+        </tr>
+        <tr>
+          <td>Client Management</td>
+          <td><span class="badge badge-amber">⚠️ No edit</span></td>
+          <td><span class="badge badge-green">✅ Full CRUD</span></td>
+        </tr>
+        <tr>
+          <td>Settings / Config</td>
+          <td><span class="badge badge-red">❌ Static UI</span></td>
+          <td><span class="badge badge-green">✅ Persisted to DB</span></td>
+        </tr>
+        <tr>
+          <td>Theming / UX</td>
+          <td><span class="badge badge-red">❌ Light only</span></td>
+          <td><span class="badge badge-amber">⚠️ Dark mode partial</span></td>
+        </tr>
+        <tr>
+          <td>Billing / Plans</td>
+          <td><span class="badge badge-red">❌ Missing</span></td>
+          <td><span class="badge badge-red">❌ Deferred</span></td>
+        </tr>
+        <tr>
+          <td>Email Notifications</td>
+          <td><span class="badge badge-red">❌ Missing</span></td>
+          <td><span class="badge badge-red">❌ Deferred</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Nexus Dashboard · Day 4 Summary · June 15, 2026 ·
+    Commit <code>20fd623</code> + INSERT fix patch ·
+    <a href="/overview.html" style="color:#6366f1;">View full feature overview</a>
+  </footer>
+
+</div>
+</body>
+</html>

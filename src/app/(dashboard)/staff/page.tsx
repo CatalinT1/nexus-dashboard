@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { getOrgId } from "@/lib/supabase/get-org-id";
 import { mapStaff } from "@/lib/supabase/mappers";
 import { getInitials, cn } from "@/lib/utils";
 import type { Staff, UserRole } from "@/lib/types";
@@ -172,6 +173,8 @@ export default function StaffPage() {
     setSaving(true);
     setError("");
     const supabase = createClient();
+    const orgId = await getOrgId().catch(() => null);
+    if (!orgId) { setError("Could not determine organization."); setSaving(false); return; }
     const { data, error: err } = await supabase
       .from("staff")
       .insert({
@@ -181,6 +184,7 @@ export default function StaffPage() {
         is_active: true, work_days: [1, 2, 3, 4, 5],
         start_time: "09:00", end_time: "17:00",
         total_appointments: 0, rating: 0,
+        organization_id: orgId,
       })
       .select().single();
     setSaving(false);

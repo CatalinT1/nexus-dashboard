@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { getOrgId } from "@/lib/supabase/get-org-id";
 
 const tagOptions = ["corporate", "premium", "referral", "monthly", "startup", "creative", "enterprise", "personal"];
 
@@ -34,6 +35,8 @@ export default function NewClientPage() {
     setLoading(true);
     setError("");
     const supabase = createClient();
+    const orgId = await getOrgId().catch(() => null);
+    if (!orgId) { setError("Could not determine organization. Please reload."); setLoading(false); return; }
     const { error: err } = await supabase.from("clients").insert({
       name: form.name,
       email: form.email,
@@ -49,6 +52,7 @@ export default function NewClientPage() {
       tags: selectedTags,
       total_appointments: 0,
       total_revenue: 0,
+      organization_id: orgId,
     });
     setLoading(false);
     if (err) { setError(err.message); return; }

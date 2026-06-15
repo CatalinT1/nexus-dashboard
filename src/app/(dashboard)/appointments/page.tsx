@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
+import { getOrgId } from "@/lib/supabase/get-org-id";
 import { mapAppointment, mapStaff } from "@/lib/supabase/mappers";
 import { exportCSV } from "@/lib/export-csv";
 import { formatCurrency, formatDate, getInitials, cn } from "@/lib/utils";
@@ -340,12 +341,15 @@ export default function AppointmentsPage() {
     setNewClientSaving(true);
     setNewClientError("");
     const supabase = createClient();
+    const orgId = await getOrgId().catch(() => null);
+    if (!orgId) { setNewClientError("Could not determine organization."); setNewClientSaving(false); return; }
     const { data, error: err } = await supabase
       .from("clients")
       .insert({
         name: newClientForm.name, email: newClientForm.email,
         phone: newClientForm.phone || null,
         status: "active", tags: [], total_appointments: 0, total_revenue: 0,
+        organization_id: orgId,
       })
       .select("id, name, email")
       .single();
@@ -374,6 +378,8 @@ export default function AppointmentsPage() {
     setCreateSaving(true);
     setCreateError("");
     const supabase = createClient();
+    const orgId = await getOrgId().catch(() => null);
+    if (!orgId) { setCreateError("Could not determine organization."); setCreateSaving(false); return; }
     const { start, end } = buildTimestamps(createForm.date, createForm.startTime, createForm.endTime);
     const { data, error: err } = await supabase
       .from("appointments")
@@ -386,6 +392,7 @@ export default function AppointmentsPage() {
         fee: createForm.fee ? parseFloat(createForm.fee) : null,
         notes: createForm.notes || null,
         reminders: createForm.reminders, color: createForm.color,
+        organization_id: orgId,
       })
       .select().single();
     setCreateSaving(false);
