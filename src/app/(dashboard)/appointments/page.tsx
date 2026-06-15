@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Plus, Clock, User, MapPin,
   Filter, CheckCircle2, XCircle, AlertCircle, Calendar,
-  List, Grid3X3, DollarSign, Edit, Trash2, FileText
+  List, Grid3X3, DollarSign, Edit, Trash2, FileText, Download
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { mapAppointment, mapStaff } from "@/lib/supabase/mappers";
+import { exportCSV } from "@/lib/export-csv";
 import { formatCurrency, formatDate, getInitials, cn } from "@/lib/utils";
 import type { Appointment, AppointmentStatus, AppointmentCategory, Staff } from "@/lib/types";
 
@@ -508,6 +509,14 @@ export default function AppointmentsPage() {
               </button>
             ))}
           </div>
+          <Button variant="outline" size="sm" onClick={() =>
+            exportCSV(appointments.map((a) => ({
+              Title: a.title, Client: a.clientName, Staff: a.staffName,
+              Status: a.status, Category: a.category,
+              Start: a.startTime, End: a.endTime,
+              Fee: a.fee ?? 0, Location: a.location ?? "",
+            })), "appointments.csv")
+          }><Download className="h-3.5 w-3.5" />Export CSV</Button>
           <Button size="sm" onClick={openCreateDialog}><Plus className="h-3.5 w-3.5" />New Appointment</Button>
         </div>
       </div>

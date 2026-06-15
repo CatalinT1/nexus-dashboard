@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { mapClient } from "@/lib/supabase/mappers";
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils";
+import { exportCSV } from "@/lib/export-csv";
 import type { Client, ClientStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +49,11 @@ export default function ClientsPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editTarget, setEditTarget] = useState<Client | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", company: "", status: "active" as ClientStatus, notes: "" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -79,6 +87,39 @@ export default function ClientsPage() {
     });
     return list;
   }, [clients, search, statusFilter, sortField, sortDir]);
+
+  const openEdit = (c: Client) => {
+    setEditTarget(c);
+    setEditForm({ name: c.name, email: c.email, phone: c.phone, company: c.company ?? "", status: c.status, notes: c.notes ?? "" });
+    setEditError("");
+    setShowEdit(true);
+  };
+
+  const handleEditClient = async () => {
+    if (!editTarget) return;
+    if (!editForm.name || !editForm.email) { setEditError("Name and email are required."); return; }
+    setEditSaving(true);
+    setEditError("");
+    const supabase = createClient();
+    const { data, error: err } = await supabase
+      .from("clients")
+      .update({
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+        company: editForm.company || null,
+        status: editForm.status,
+        notes: editForm.notes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editTarget.id)
+      .select()
+      .single();
+    setEditSaving(false);
+    if (err) { setEditError(err.message); return; }
+    if (data) setClients((prev) => prev.map((c) => c.id === editTarget.id ? mapClient(data) : c));
+    setShowEdit(false);
+  };
 
   const handleDeleteClient = async () => {
     if (!deleteTarget) return;
@@ -118,7 +159,13 @@ export default function ClientsPage() {
           <p className="mt-1 text-sm text-slate-500">{filtered.length} of {clients.length} clients</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" />Export</Button>
+          <Button variant="outline" size="sm" onClick={() =>
+            exportCSV(filtered.map((c) => ({
+              Name: c.name, Email: c.email, Phone: c.phone,
+              Company: c.company ?? "", Status: c.status,
+              Revenue: c.totalRevenue, Appointments: c.totalAppointments,
+            })), "clients.csv")
+          }><Download className="h-3.5 w-3.5" />Export CSV</Button>
           <Button size="sm" asChild>
             <Link href="/clients/new"><Plus className="h-3.5 w-3.5" />Add Client</Link>
           </Button>
@@ -257,6 +304,12 @@ export default function ClientsPage() {
                               <Eye className="h-3.5 w-3.5" /> View profile
                             </Link>
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="flex items-center gap-2"
+                            onClick={() => openEdit(client)}
+                          >
+                            <Edit className="h-3.5 w-3.5" /> Edit
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
@@ -291,6 +344,59 @@ export default function ClientsPage() {
           </div>
         </div>
       </Card>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={showEdit} onOpenChange={(o) => { if (!o) setShowEdit(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>Update client information below.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="edit-name">Full Name <span className="text-red-500">*</span></Label>
+                <Input id="edit-name" value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-email">Email <span className="text-red-500">*</span></Label>
+                <Input id="edit-email" type="email" value={editForm.email} onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input id="edit-phone" value={editForm.phone} onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-company">Company</Label>
+                <Input id="edit-company" value={editForm.company} onChange={(e) => setEditForm((p) => ({ ...p, company: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v as ClientStatus }))}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="vip">VIP</SelectItem>
+                    <SelectItem value="prospect">Prospect</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="edit-notes">Notes</Label>
+                <Textarea id="edit-notes" rows={3} value={editForm.notes} onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Optional notes about this client" />
+              </div>
+            </div>
+            {editError && <p className="text-xs text-red-600">{editError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button onClick={handleEditClient} loading={editSaving}>{!editSaving && "Save Changes"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent className="max-w-sm">

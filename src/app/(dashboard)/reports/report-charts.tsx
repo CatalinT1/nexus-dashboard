@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
+import { exportCSV } from "@/lib/export-csv";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -50,7 +51,12 @@ export function ReportCharts({ revenueData, topClients, topStaff, totalRevenue, 
             <SelectItem value="year">This Year</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" />Export</Button>
+        <Button variant="outline" size="sm" onClick={() =>
+          exportCSV(
+            revenueData.map((r) => ({ Month: r.month, Revenue: r.revenue, Appointments: r.appointments })),
+            "revenue-report.csv"
+          )
+        }><Download className="h-3.5 w-3.5" />Export CSV</Button>
       </div>
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">

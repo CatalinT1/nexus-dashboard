@@ -1,21 +1,24 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, Calendar, UserCog, BarChart3,
   Settings, ChevronLeft, ChevronRight, LogOut, Zap,
-  Bell, HelpCircle, ShieldCheck
+  HelpCircle, ShieldCheck
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { createClient } from "@/lib/supabase/client";
+
+type SidebarUser = { name: string; email: string; role: string; avatar?: string };
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/clients", icon: Users, label: "Clients", badge: "128" },
-  { href: "/appointments", icon: Calendar, label: "Appointments", badge: "4" },
+  { href: "/clients", icon: Users, label: "Clients" },
+  { href: "/appointments", icon: Calendar, label: "Appointments" },
   { href: "/staff", icon: UserCog, label: "Staff" },
   { href: "/users", icon: ShieldCheck, label: "Users" },
   { href: "/reports", icon: BarChart3, label: "Reports" },
@@ -26,11 +29,18 @@ const bottomNavItems = [
   { href: "/help", icon: HelpCircle, label: "Help & Support" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: SidebarUser }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -107,18 +117,23 @@ export function Sidebar() {
           collapsed && "justify-center"
         )}>
           <Avatar className="h-8 w-8 shrink-0">
-            <AvatarFallback className="text-xs">AW</AvatarFallback>
+            <AvatarFallback className="text-xs bg-indigo-600 text-white">
+              {getInitials(user.name)}
+            </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Admin User</p>
-              <p className="text-xs text-slate-500 truncate">admin@nexus.com</p>
+              <p className="text-sm font-medium text-white truncate">{user.name}</p>
+              <p className="text-xs text-slate-500 truncate">{user.email}</p>
             </div>
           )}
           {!collapsed && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors">
+                <button
+                  onClick={handleSignOut}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+                >
                   <LogOut className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
