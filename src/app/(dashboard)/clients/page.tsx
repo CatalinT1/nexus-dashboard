@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Search, Plus, Filter, Download, MoreHorizontal,
@@ -55,12 +55,14 @@ export default function ClientsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
+  const supabase = useRef(createClient()).current;
+
   useEffect(() => {
-    const supabase = createClient();
     supabase.from("clients").select("*").then(({ data }) => {
       if (data) setClients(data.map(mapClient));
       setLoading(false);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
@@ -100,7 +102,6 @@ export default function ClientsPage() {
     if (!editForm.name || !editForm.email) { setEditError("Name and email are required."); return; }
     setEditSaving(true);
     setEditError("");
-    const supabase = createClient();
     const { data, error: err } = await supabase
       .from("clients")
       .update({
@@ -124,7 +125,6 @@ export default function ClientsPage() {
   const handleDeleteClient = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const supabase = createClient();
     const { error: err } = await supabase.from("clients").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (err) return;

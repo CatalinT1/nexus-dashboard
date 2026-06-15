@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { getOrgId } from "@/lib/supabase/get-org-id";
+import { useTheme } from "next-themes";
 
 type NotificationPrefs = {
   emailAppt: boolean; emailReminder: boolean; emailPayment: boolean;
@@ -25,6 +26,7 @@ const DEFAULT_NOTIF: NotificationPrefs = {
 };
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
@@ -216,7 +218,10 @@ export default function SettingsPage() {
                     <p className="text-sm font-medium text-slate-900">Dark Mode</p>
                     <p className="text-xs text-slate-500">Switch between light and dark themes</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={theme === "dark"}
+                    onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
+                  />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Bell, Plus, ChevronDown, User, Settings, LogOut, Moon, Sun, X } from "lucide-react";
@@ -33,6 +33,8 @@ type SearchResult = {
 export function Header({ user }: { user: HeaderUser }) {
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
+  // Single shared client instance for all header queries — avoids creating a new client per operation
+  const supabase = useMemo(() => createClient(), []);
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [query, setQuery] = useState("");
@@ -41,15 +43,15 @@ export function Header({ user }: { user: HeaderUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
     supabase
       .from("notifications")
-      .select("*")
+      .select("id,user_id,type,title,message,is_read,href,created_at")
       .order("created_at", { ascending: false })
       .limit(10)
       .then(({ data }) => {
         if (data) setNotifications(data.map(mapNotification));
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Debounced search
@@ -60,7 +62,6 @@ export function Header({ user }: { user: HeaderUser }) {
     }
     const timer = setTimeout(async () => {
       setSearching(true);
-      const supabase = createClient();
       const [{ data: clients }, { data: apts }] = await Promise.all([
         supabase.from("clients").select("id, name, email").ilike("name", `%${query}%`).limit(5),
         supabase.from("appointments")
@@ -95,7 +96,6 @@ export function Header({ user }: { user: HeaderUser }) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
-    const supabase = createClient();
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
   };
 
@@ -103,12 +103,10 @@ export function Header({ user }: { user: HeaderUser }) {
     const unread = notifications.filter((n) => !n.isRead).map((n) => n.id);
     if (!unread.length) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    const supabase = createClient();
     await supabase.from("notifications").update({ is_read: true }).in("id", unread);
   };
 
   const handleSignOut = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
   };
@@ -120,7 +118,7 @@ export function Header({ user }: { user: HeaderUser }) {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6 gap-4 shrink-0">
+    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700 px-6 gap-4 shrink-0">
       {/* Search */}
       <div className="flex-1 max-w-md relative" ref={searchRef}>
         <Input

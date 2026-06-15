@@ -276,8 +276,9 @@ export default function AppointmentsPage() {
   const [newClientSaving, setNewClientSaving] = useState(false);
   const [newClientError, setNewClientError] = useState("");
 
+  const supabase = useRef(createClient()).current;
+
   useEffect(() => {
-    const supabase = createClient();
     Promise.all([
       supabase.from("appointments").select("*").order("start_time", { ascending: true }),
       supabase.from("staff").select("*"),
@@ -300,7 +301,6 @@ export default function AppointmentsPage() {
   const loadClients = async () => {
     if (clientsLoaded) return;
     setClientsLoading(true);
-    const supabase = createClient();
     const { data } = await supabase.from("clients").select("id, name, email").order("name");
     if (data) setClientOptions(data as ClientOption[]);
     setClientsLoaded(true);
@@ -340,7 +340,6 @@ export default function AppointmentsPage() {
     }
     setNewClientSaving(true);
     setNewClientError("");
-    const supabase = createClient();
     const orgId = await getOrgId().catch(() => null);
     if (!orgId) { setNewClientError("Could not determine organization."); setNewClientSaving(false); return; }
     const { data, error: err } = await supabase
@@ -377,7 +376,6 @@ export default function AppointmentsPage() {
     }
     setCreateSaving(true);
     setCreateError("");
-    const supabase = createClient();
     const orgId = await getOrgId().catch(() => null);
     if (!orgId) { setCreateError("Could not determine organization."); setCreateSaving(false); return; }
     const { start, end } = buildTimestamps(createForm.date, createForm.startTime, createForm.endTime);
@@ -411,7 +409,6 @@ export default function AppointmentsPage() {
     }
     setEditSaving(true);
     setEditError("");
-    const supabase = createClient();
     const { start, end } = buildTimestamps(editForm.date, editForm.startTime, editForm.endTime);
     const { data, error: err } = await supabase
       .from("appointments")
@@ -439,7 +436,6 @@ export default function AppointmentsPage() {
 
   const handleStatusChange = async (id: string, status: AppointmentStatus) => {
     setActionSaving(true);
-    const supabase = createClient();
     const { data } = await supabase
       .from("appointments").update({ status }).eq("id", id).select().single();
     setActionSaving(false);
@@ -453,7 +449,6 @@ export default function AppointmentsPage() {
   const handleDeleteApt = async () => {
     if (!selectedApt) return;
     setAptDeleting(true);
-    const supabase = createClient();
     await supabase.from("appointments").delete().eq("id", selectedApt.id);
     setAptDeleting(false);
     setAppointments((prev) => prev.filter((a) => a.id !== selectedApt.id));

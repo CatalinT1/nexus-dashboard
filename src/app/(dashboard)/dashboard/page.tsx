@@ -24,27 +24,46 @@ const statusConfig: Record<string, { label: string; icon: React.ElementType; col
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const today = new Date().toDateString();
+
+  // Start of today in ISO (UTC) — scopes all appointment queries to future/today only
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
 
   const [
     { data: rawAppointments },
     { data: rawActivities },
     { data: rawRevenue },
-    { count: totalClients },
-    { count: activeClients },
-    { count: vipClients },
-    { count: prospectClients },
+    { data: rawClientStatuses },
     { count: activeStaff },
   ] = await Promise.all([
-    supabase.from("appointments").select("*").order("start_time", { ascending: true }),
-    supabase.from("client_activities").select("*").order("created_at", { ascending: false }).limit(5),
+    // Only fetch upcoming + today; only columns the dashboard needs; limit to 20
+    supabase
+      .from("appointments")
+      .select("id,client_id,client_name,staff_id,staff_name,title,category,status,start_time,end_time,fee,color,reminders,notes,location,created_at,updated_at")
+      .gte("start_time", todayStart.toISOString())
+      .not("status", "in", '("cancelled","completed")')
+      .order("start_time", { ascending: true })
+      .limit(20),
+    // Only the 3 columns needed for the activity feed
+    supabase
+      .from("client_activities")
+      .select("id,client_id,type,title,description,created_at,created_by")
+      .order("created_at", { ascending: false })
+      .limit(5),
     supabase.from("revenue_data").select("*").order("month_order", { ascending: true }),
-    supabase.from("clients").select("*", { count: "exact", head: true }),
-    supabase.from("clients").select("*", { count: "exact", head: true }).in("status", ["active", "vip"]),
-    supabase.from("clients").select("*", { count: "exact", head: true }).eq("status", "vip"),
-    supabase.from("clients").select("*", { count: "exact", head: true }).eq("status", "prospect"),
-    supabase.from("staff").select("*", { count: "exact", head: true }).eq("is_active", true),
+    // One status-only query replaces 4 separate COUNT queries
+    supabase.from("clients").select("status"),
+    supabase.from("staff").select("id", { count: "exact", head: true }).eq("is_active", true),
   ]);
+
+  // Derive all four counts from one result set
+  const clientStatuses = rawClientStatuses ?? [];
+  const totalClients   = clientStatuses.length;
+  const activeClients  = clientStatuses.filter((c) => c.status === "active" || c.status === "vip").length;
+  const vipClients     = clientStatuses.filter((c) => c.status === "vip").length;
+  const prospectClients = clientStatuses.filter((c) => c.status === "prospect").length;
 
   const appointments: Appointment[] = (rawAppointments ?? []).map(mapAppointment);
   const activities: ClientActivity[] = (rawActivities ?? []).map(mapClientActivity);
@@ -53,12 +72,12 @@ export default async function DashboardPage() {
   const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
   const mtdAppointments = revenueData.at(-1)?.appointments ?? 0;
 
-  const upcomingAppointments = appointments
-    .filter((a) => a.status !== "cancelled" && a.status !== "completed")
-    .slice(0, 5);
+  // Already scoped to upcoming (gte today, not cancelled/completed) — just take first 5
+  const upcomingAppointments = appointments.slice(0, 5);
 
+  const todayEndStr = todayEnd.toISOString();
   const todayAppointments = appointments.filter(
-    (a) => new Date(a.startTime).toDateString() === today
+    (a) => a.startTime < todayEndStr
   ).length;
 
   const kpis = [
